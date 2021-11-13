@@ -2,17 +2,18 @@ package com.example.demodatn.util;
 
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
 
 public class WebUtils {
 
-    public static String toString(User user) {
+    public static String toString(UserDetails user) {
         StringBuilder sb = new StringBuilder();
 
         sb.append("UserName:").append(user.getUsername());
 
-        Collection<GrantedAuthority> authorities = user.getAuthorities();
+        Collection<GrantedAuthority> authorities = (Collection<GrantedAuthority>) user.getAuthorities();
         if (authorities != null && !authorities.isEmpty()) {
             sb.append(" (");
             boolean first = true;

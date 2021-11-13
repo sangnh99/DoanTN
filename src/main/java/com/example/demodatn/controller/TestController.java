@@ -2,6 +2,7 @@ package com.example.demodatn.controller;
 
 import com.example.demodatn.entity.RoleEntity;
 import com.example.demodatn.entity.UserAppEntity;
+import com.example.demodatn.entity.UserPrinciple;
 import com.example.demodatn.repository.RoleRepository;
 import com.example.demodatn.repository.UserAppRepository;
 import com.example.demodatn.repository.UserRoleRepository;
@@ -9,6 +10,7 @@ import com.example.demodatn.util.WebUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -29,19 +31,19 @@ public class TestController {
     @Autowired
     private UserRoleRepository userRoleRepository;
 
-    @GetMapping("/")
-    public String test(){
-        UserAppEntity user = userRepository.findByUsername("sang.nguyen");
-        System.out.println(user.getPassword());
-        RoleEntity roleEntity = roleRepository.findById(1L).orElse(null);
-        System.out.println(roleEntity.getCode());
-        return "index";
-    }
+//    @GetMapping("/")
+//    public String test(){
+//        UserAppEntity user = userRepository.findByUsername("sang.nguyen");
+//        System.out.println(user.getPassword());
+//        RoleEntity roleEntity = roleRepository.findById(1L).orElse(null);
+//        System.out.println(roleEntity.getCode());
+//        return "index";
+//    }
 
     @RequestMapping(value = "/admin", method = RequestMethod.GET)
     public String adminPage(Model model, Principal principal) {
 
-        User loginedUser = (User) ((Authentication) principal).getPrincipal();
+        UserDetails loginedUser = (UserDetails) ((Authentication) principal).getPrincipal();
 
         String userInfo = WebUtils.toString(loginedUser);
         model.addAttribute("userInfo", userInfo);
@@ -49,11 +51,11 @@ public class TestController {
         return "adminPage";
     }
 
-    @RequestMapping(value = "/login", method = RequestMethod.GET)
-    public String loginPage(Model model) {
-
-        return "loginPage";
-    }
+//    @RequestMapping(value = "/login", method = RequestMethod.GET)
+//    public String loginPage(Model model) {
+//
+//        return "loginPage";
+//    }
 
     @RequestMapping(value = "/logoutSuccessful", method = RequestMethod.GET)
     public String logoutSuccessfulPage(Model model) {
