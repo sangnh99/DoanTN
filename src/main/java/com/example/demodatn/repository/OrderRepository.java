@@ -1,6 +1,6 @@
 package com.example.demodatn.repository;
 
-import com.example.demo.entity.OrderEntity;
+import com.example.demodatn.entity.OrderEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

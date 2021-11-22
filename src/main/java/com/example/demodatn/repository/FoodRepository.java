@@ -1,6 +1,6 @@
 package com.example.demodatn.repository;
 
-import com.example.demo.entity.FoodEntity;
+import com.example.demodatn.entity.FoodEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

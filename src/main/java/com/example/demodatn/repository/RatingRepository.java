@@ -1,6 +1,5 @@
 package com.example.demodatn.repository;
-
-import com.example.demo.entity.RatingEntity;
+import com.example.demodatn.entity.RatingEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
