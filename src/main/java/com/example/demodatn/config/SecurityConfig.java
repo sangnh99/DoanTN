@@ -63,7 +63,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 //        http.httpBasic().authenticationEntryPoint(restServicesEntryPoint());
 
         http.cors().and().csrf().disable().authorizeRequests()
-                .antMatchers("/", "/login","/home/**" , "/forgot_password/**", "/reset_password/**").permitAll()
+                .antMatchers("/", "/login","/home/**" , "/forgot_password/**", "/reset_password/**", "/register/**").permitAll()
                 .anyRequest().authenticated()
                 .and().csrf().disable();
         http.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
