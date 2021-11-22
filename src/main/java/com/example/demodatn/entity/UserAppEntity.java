@@ -30,6 +30,8 @@ public class UserAppEntity extends BaseEntity{
     private String avatar;
     @Column(name = "RESET_PASSWORD_TOKEN")
     private String resetPasswordToken;
+    @Column(name = "VERIFY_EMAIL_TOKEN")
+    private String verifyEmailToken;
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @JoinColumn(name = "USER_ID", insertable = false, updatable = false)
@@ -115,5 +117,13 @@ public class UserAppEntity extends BaseEntity{
 
     public void setResetPasswordToken(String resetPasswordToken) {
         this.resetPasswordToken = resetPasswordToken;
+    }
+
+    public String getVerifyEmailToken() {
+        return verifyEmailToken;
+    }
+
+    public void setVerifyEmailToken(String verifyEmailToken) {
+        this.verifyEmailToken = verifyEmailToken;
     }
 }

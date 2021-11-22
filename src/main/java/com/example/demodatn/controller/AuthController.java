@@ -81,7 +81,17 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<ResponseDataAPI> register(@RequestBody RegisterDomain domain){
+    public ResponseEntity<ResponseDataAPI> register(@RequestBody RegisterDomain domain) throws Exception {
+        String token = RandomString.make(30);
+        userAppService.registerUserApp(domain, token);
+        userAppService.sendEmailVerify(domain.getEmail(), token);
+        return ResponseEntity.ok(ResponseDataAPI.builder().build());
+    }
+
+    @PostMapping("/register/handle-register")
+    public ResponseEntity<ResponseDataAPI> validateRegister(@RequestBody ValidateEmailDomain domain) throws Exception {
+
+        userAppService.validateAccountByEmail(domain);
         return ResponseEntity.ok(ResponseDataAPI.builder().build());
     }
 }
