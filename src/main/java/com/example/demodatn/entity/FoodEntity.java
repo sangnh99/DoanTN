@@ -19,6 +19,8 @@ public class FoodEntity extends BaseEntity{
     private Long foodTypeId;
     @Column(name = "STORE_ID")
     private Long storeId;
+    @Column(name = "PRICE")
+    private Long price;
     @Column(name = "SUMMARY_RATING")
     private Double summaryRating;
     @Column(name = "AVATAR")
@@ -70,5 +72,13 @@ public class FoodEntity extends BaseEntity{
 
     public void setAvatar(String avatar) {
         this.avatar = avatar;
+    }
+
+    public Long getPrice() {
+        return price;
+    }
+
+    public void setPrice(Long price) {
+        this.price = price;
     }
 }
