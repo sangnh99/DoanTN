@@ -2,6 +2,7 @@ package com.example.demodatn.controller;
 
 import com.example.demodatn.domain.BasicRequest;
 import com.example.demodatn.domain.ResponseDataAPI;
+import com.example.demodatn.domain.VoteDomain;
 import com.example.demodatn.service.FoodServiceImpl;
 import io.swagger.annotations.ApiParam;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,8 +43,14 @@ public class FoodController {
         return ResponseEntity.ok(ResponseDataAPI.builder().data(foodService.getListFoodByFoodType(foodType, request)).build());
     }
 
-    @GetMapping("/{food_id}")
+    @GetMapping("/{food_id}/detail")
     public ResponseEntity<ResponseDataAPI> getFoodDetail(@PathVariable("food_id") String foodId){
         return ResponseEntity.ok(ResponseDataAPI.builder().data(foodService.getFoodDetail(foodId)).build());
+    }
+
+    @PostMapping("/vote")
+    public ResponseEntity<ResponseDataAPI> updateVoteForFood(@RequestBody VoteDomain domain){
+        foodService.updateVoteForFood(domain);
+        return ResponseEntity.ok(ResponseDataAPI.builder().build());
     }
 }
