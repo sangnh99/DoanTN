@@ -6,11 +6,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.awt.image.RenderedImage;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
@@ -22,8 +17,6 @@ import java.nio.file.Paths;
 @RequestMapping("/image")
 public class ImageController {
 
-//    @RequestMapping(value = "/upload" ,method = RequestMethod.POST, consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE,
-//            produces = {MediaType.APPLICATION_ATOM_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
     @RequestMapping(value = "/upload" ,method = RequestMethod.POST)
     public ResponseEntity<ResponseDataAPI> uploadImage(@RequestParam("filea") MultipartFile file){
         Path filepath = Path.of("imagebbb.jpg");
