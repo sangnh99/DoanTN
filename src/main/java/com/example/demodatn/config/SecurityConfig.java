@@ -57,14 +57,14 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     protected void configure(HttpSecurity http) throws Exception {
         //        // Trang chỉ dành cho ADMIN
         http.authorizeRequests().antMatchers("/admin/**").access("hasRole('ROLE_ADMIN')");
-        http.authorizeRequests().antMatchers("/user/profile").access("hasAnyRole('ROLE_USER', 'ROLE_ADMIN')");
+        http.authorizeRequests().antMatchers("/user/**").access("hasAnyRole('ROLE_USER', 'ROLE_ADMIN')");
         http.authorizeRequests().antMatchers("/food/**").access("hasAnyRole('ROLE_USER', 'ROLE_ADMIN')");
 
 //        http.csrf().ignoringAntMatchers("/**");
 //        http.httpBasic().authenticationEntryPoint(restServicesEntryPoint());
 
         http.cors().and().csrf().disable().authorizeRequests()
-                .antMatchers("/", "/login","/home/**" , "/forgot_password/**", "/reset_password/**", "/register/**").permitAll()
+                .antMatchers("/", "/login","/home/**" , "/image/**",  "/forgot_password/**", "/reset_password/**", "/register/**").permitAll()
                 .anyRequest().authenticated()
                 .and().csrf().disable();
         http.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
