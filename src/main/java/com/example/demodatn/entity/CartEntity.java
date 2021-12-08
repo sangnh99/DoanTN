@@ -19,6 +19,8 @@ public class CartEntity extends BaseEntity{
     private Long foodId;
     @Column(name = "AMOUNT")
     private Integer amount;
+    @Column(name = "PRICE")
+    private Long price;
 
     public Long getId() {
         return id;
@@ -50,5 +52,13 @@ public class CartEntity extends BaseEntity{
 
     public void setAmount(Integer amount) {
         this.amount = amount;
+    }
+
+    public Long getPrice() {
+        return price;
+    }
+
+    public void setPrice(Long price) {
+        this.price = price;
     }
 }

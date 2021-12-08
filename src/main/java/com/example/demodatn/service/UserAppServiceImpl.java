@@ -1,12 +1,18 @@
 package com.example.demodatn.service;
 
 import com.example.demodatn.constant.RoleConstant;
+import com.example.demodatn.domain.AddToCartDomain;
 import com.example.demodatn.domain.RegisterDomain;
 import com.example.demodatn.domain.ValidateEmailDomain;
+import com.example.demodatn.entity.CartEntity;
+import com.example.demodatn.entity.FoodEntity;
 import com.example.demodatn.entity.UserAppEntity;
 import com.example.demodatn.entity.UserRoleEntity;
+import com.example.demodatn.repository.CartRepository;
+import com.example.demodatn.repository.FoodRepository;
 import com.example.demodatn.repository.UserAppRepository;
 import com.example.demodatn.repository.UserRoleRepository;
+import com.example.demodatn.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -27,6 +33,12 @@ public class UserAppServiceImpl implements UserAppService {
 
     @Autowired
     private UserRoleRepository userRoleRepository;
+
+    @Autowired
+    private FoodRepository foodRepository;
+
+    @Autowired
+    private CartRepository cartRepository;
 
     @Override
     public void sendEmail(String recipientEmail, String link) throws Exception {
@@ -143,5 +155,23 @@ public class UserAppServiceImpl implements UserAppService {
         userRoleEntity.setRoleId(RoleConstant.ROLE_USER.getNumber());
 
         userRoleRepository.save(userRoleEntity);
+    }
+
+    @Transactional
+    public void deleteAndAddToCart(AddToCartDomain domain){
+        Long userAppId = StringUtils.convertStringToLongOrNull(domain.getUserAppId());
+        Long foodId = StringUtils.convertObjectToLongOrNull(domain.getFoodId());
+        FoodEntity foodEntity = foodRepository.getById(foodId);
+        Integer number = StringUtils.convertStringToIntegerOrNull(domain.getAmount());
+
+        cartRepository.deleteCartByUserAppId(userAppId);
+
+        CartEntity cartEntity = new CartEntity();
+        cartEntity.setUserAppId(userAppId);
+        cartEntity.setFoodId(foodId);
+        cartEntity.setAmount(number);
+        cartEntity.setPrice(foodEntity.getPrice());
+
+        cartRepository.save(cartEntity);
     }
 }
