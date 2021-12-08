@@ -97,8 +97,8 @@ public class FoodServiceImpl {
                     , Error.PARAMETER_INVALID.getCode(), HttpStatus.BAD_REQUEST);
         }
         FoodWithCommentDomain domain = new FoodWithCommentDomain();
-        domain.setId(StringUtils.convertObjectToString(t.getId()));
-        domain.setName(t.getName());
+        domain.setFoodId(StringUtils.convertObjectToString(t.getId()));
+        domain.setFoodName(t.getName());
         domain.setFoodTypeId(StringUtils.convertObjectToString(t.getFoodTypeId()));
         domain.setStoreId(StringUtils.convertObjectToString(t.getStoreId()));
         domain.setStoreName(storeRepository.findById(t.getStoreId()).orElse(null).getName());

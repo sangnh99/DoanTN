@@ -53,4 +53,6 @@ public class FoodController {
         foodService.updateVoteForFood(domain);
         return ResponseEntity.ok(ResponseDataAPI.builder().build());
     }
+
+
 }

@@ -3,20 +3,28 @@ package com.example.demodatn.domain;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 
-import java.util.List;
-
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
-public class FoodWithCommentDomain {
+public class CartDomain {
+//    private String cartId;
     private String foodId;
-    private String foodName;
     private String foodTypeId;
+    private String foodName;
     private String storeId;
     private String storeName;
-    private String summaryRating;
-    private String avatar;
+    private Integer amount;
     private String price;
-    private String numberOfVote;
-    private List<CommentDomain> listComments;
+    private String avatar;
+
+    public void setAvatar(String avatar) {
+        this.avatar = avatar;
+    }
+    //    public String getCartId() {
+//        return cartId;
+//    }
+//
+//    public void setCartId(String cartId) {
+//        this.cartId = cartId;
+//    }
 
     public String getFoodId() {
         return foodId;
@@ -26,20 +34,20 @@ public class FoodWithCommentDomain {
         this.foodId = foodId;
     }
 
-    public String getFoodName() {
-        return foodName;
-    }
-
-    public void setFoodName(String foodName) {
-        this.foodName = foodName;
-    }
-
     public String getFoodTypeId() {
         return foodTypeId;
     }
 
     public void setFoodTypeId(String foodTypeId) {
         this.foodTypeId = foodTypeId;
+    }
+
+    public String getFoodName() {
+        return foodName;
+    }
+
+    public void setFoodName(String foodName) {
+        this.foodName = foodName;
     }
 
     public String getStoreId() {
@@ -58,20 +66,12 @@ public class FoodWithCommentDomain {
         this.storeName = storeName;
     }
 
-    public String getSummaryRating() {
-        return summaryRating;
+    public Integer getAmount() {
+        return amount;
     }
 
-    public void setSummaryRating(String summaryRating) {
-        this.summaryRating = summaryRating;
-    }
-
-    public String getAvatar() {
-        return avatar;
-    }
-
-    public void setAvatar(String avatar) {
-        this.avatar = avatar;
+    public void setAmount(Integer amount) {
+        this.amount = amount;
     }
 
     public String getPrice() {
@@ -82,19 +82,7 @@ public class FoodWithCommentDomain {
         this.price = price;
     }
 
-    public List<CommentDomain> getListComments() {
-        return listComments;
-    }
-
-    public void setListComments(List<CommentDomain> listComments) {
-        this.listComments = listComments;
-    }
-
-    public String getNumberOfVote() {
-        return numberOfVote;
-    }
-
-    public void setNumberOfVote(String numberOfVote) {
-        this.numberOfVote = numberOfVote;
+    public String getAvatar() {
+        return avatar;
     }
 }
