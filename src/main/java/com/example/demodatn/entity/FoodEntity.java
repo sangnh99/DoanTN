@@ -25,6 +25,8 @@ public class FoodEntity extends BaseEntity{
     private Double summaryRating;
     @Column(name = "AVATAR")
     private String avatar;
+    @Column(name = "SUB_FOOD_TYPE_ID")
+    private Long subFoodTypeId;
 
     public Long getId() {
         return id;
@@ -80,5 +82,13 @@ public class FoodEntity extends BaseEntity{
 
     public void setPrice(Long price) {
         this.price = price;
+    }
+
+    public Long getSubFoodTypeId() {
+        return subFoodTypeId;
+    }
+
+    public void setSubFoodTypeId(Long subFoodTypeId) {
+        this.subFoodTypeId = subFoodTypeId;
     }
 }

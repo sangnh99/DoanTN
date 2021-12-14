@@ -3,10 +3,9 @@ package com.example.demodatn.service;
 import com.example.demodatn.constant.ColumnSortFood;
 import com.example.demodatn.constant.ConstantDefine;
 import com.example.demodatn.constant.Error;
+import com.example.demodatn.constant.TypeSearch;
 import com.example.demodatn.domain.*;
-import com.example.demodatn.entity.FoodEntity;
-import com.example.demodatn.entity.RatingEntity;
-import com.example.demodatn.entity.UserAppEntity;
+import com.example.demodatn.entity.*;
 import com.example.demodatn.exception.CustomException;
 import com.example.demodatn.repository.*;
 import com.example.demodatn.util.StringUtils;
@@ -20,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
@@ -41,6 +41,9 @@ public class FoodServiceImpl {
 
     @Autowired
     private UserAppRepository userAppRepository;
+
+    @Autowired
+    private SubFoodTypeRepository subFoodTypeRepository;
 
     public List<FoodDomain> getListFoodByFoodType(String foodTypeStr, BasicRequest request){
         Long foodType = StringUtils.convertObjectToLongOrNull(foodTypeStr);
@@ -146,5 +149,91 @@ public class FoodServiceImpl {
         }
 
         ratingRepository.save(ratingEntity);
+    }
+
+    public List<StoreDetailByFoodIdDomain> getAllFoodOfStoreByFoodId(String food) {
+        Long foodId = StringUtils.convertObjectToLongOrNull(food);
+        if (foodId == null) {
+            throw new CustomException(Error.PARAMETER_INVALID.getMessage()
+                    , Error.PARAMETER_INVALID.getCode(), HttpStatus.BAD_REQUEST);
+        }
+        FoodEntity foodEntity = foodRepository.findById(foodId).orElse(null);
+        if (foodEntity == null) {
+            throw new CustomException(Error.PARAMETER_INVALID.getMessage()
+                    , Error.PARAMETER_INVALID.getCode(), HttpStatus.BAD_REQUEST);
+        }
+        StoreEntity storeEntity = storeRepository.getById(foodEntity.getStoreId());
+        List<SubFoodTypeEntity> listSubfoodType = subFoodTypeRepository.findAllByStoreId(storeEntity.getId()).stream().sorted((t1, t2) -> t1.getId().compareTo(t2.getId())).collect(Collectors.toList());
+        List<FoodEntity> listFood = foodRepository.findAllByStoreId(storeEntity.getId());
+        List<StoreDetailByFoodIdDomain> listResult = new ArrayList<>();
+        int count = 1;
+        for (SubFoodTypeEntity subType : listSubfoodType){
+            StoreDetailByFoodIdDomain domain = new StoreDetailByFoodIdDomain();
+            domain.setSubFoodTypeId(StringUtils.convertObjectToString(subType.getId()));
+            domain.setSubFoodTypeName(subType.getName());
+            domain.setKey(StringUtils.convertObjectToString(count ++));
+            domain.setListFood(listFood.stream().filter(t -> subType.getId().equals(t.getSubFoodTypeId()))
+                    .map(t -> {
+                        FoodDomain foodDomain = new FoodDomain();
+                        foodDomain.setId(StringUtils.convertObjectToString(t.getId()));
+                        foodDomain.setName(t.getName());
+                        foodDomain.setFoodTypeId(StringUtils.convertObjectToString(t.getFoodTypeId()));
+                        foodDomain.setStoreId(StringUtils.convertObjectToString(t.getStoreId()));
+                        foodDomain.setStoreName(storeRepository.findById(t.getStoreId()).orElse(null).getName());
+                        foodDomain.setSummaryRating(StringUtils.convertObjectToString(t.getSummaryRating()));
+                        foodDomain.setAvatar(t.getAvatar());
+                        foodDomain.setPrice(StringUtils.convertObjectToString(t.getPrice()));
+                        return foodDomain;
+                    })
+                    .collect(Collectors.toList()));
+            listResult.add(domain);
+        }
+        return listResult;
+    }
+
+    public List<Object> getAllBySearchValue(String valueSearchOriginal, String typeSearchStr, Integer offset){
+        Integer typeSearch = StringUtils.convertStringToIntegerOrNull(typeSearchStr);
+        if (typeSearch == null){
+            throw new CustomException(Error.PARAMETER_INVALID.getMessage()
+                    , Error.PARAMETER_INVALID.getCode(), HttpStatus.BAD_REQUEST);
+        }
+
+        Sort sort = Sort.by(Sort.Order.desc("id"));
+
+        Pageable pageable = PageRequest.of(offset, 12, sort);
+
+
+        String valueSearch = valueSearchOriginal.trim().toLowerCase(Locale.ROOT);
+        if (TypeSearch.STORE.getValue().equals(typeSearch)){
+            Page<StoreEntity> listStore = storeRepository.findStoreBySearchValue(valueSearch, pageable);
+            if (listStore.getTotalElements() != 0){
+                return listStore.stream().map(t -> {
+                    StoreDomain storeDomain = new StoreDomain();
+                    storeDomain.setId(StringUtils.convertObjectToString(t.getId()));
+                    storeDomain.setName(t.getName());
+                    storeDomain.setAvatar(t.getAvatar());
+                    storeDomain.setAddress(t.getAddress());
+                    storeDomain.setPhone(t.getPhone());
+                    return storeDomain;
+                }).collect(Collectors.toList());
+            }
+        } else {
+            Page<FoodEntity> listFood = foodRepository.findFoodBySearchValue(valueSearch, pageable);
+            if (listFood.getTotalElements() != 0){
+                return listFood.stream().map(t -> {
+                    FoodDomain domain = new FoodDomain();
+                    domain.setId(StringUtils.convertObjectToString(t.getId()));
+                    domain.setName(t.getName());
+                    domain.setFoodTypeId(StringUtils.convertObjectToString(t.getFoodTypeId()));
+                    domain.setStoreId(StringUtils.convertObjectToString(t.getStoreId()));
+                    domain.setStoreName(storeRepository.findById(t.getStoreId()).orElse(null).getName());
+                    domain.setSummaryRating(StringUtils.convertObjectToString(t.getSummaryRating()));
+                    domain.setAvatar(t.getAvatar());
+                    domain.setPrice(StringUtils.convertObjectToString(t.getPrice()));
+                    return domain;
+                }).collect(Collectors.toList());
+            }
+        }
+        return new ArrayList<>();
     }
 }
