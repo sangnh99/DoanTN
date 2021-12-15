@@ -13,6 +13,7 @@ public class StoreDetailDomain {
     private String phone;
     private String avatar;
     private List<StoreDetailByFoodIdDomain> listSubFoodType;
+    private List<CommentDomain> listComments;
 
     public String getId() {
         return id;
@@ -60,5 +61,13 @@ public class StoreDetailDomain {
 
     public void setListSubFoodType(List<StoreDetailByFoodIdDomain> listSubFoodType) {
         this.listSubFoodType = listSubFoodType;
+    }
+
+    public List<CommentDomain> getListComments() {
+        return listComments;
+    }
+
+    public void setListComments(List<CommentDomain> listComments) {
+        this.listComments = listComments;
     }
 }

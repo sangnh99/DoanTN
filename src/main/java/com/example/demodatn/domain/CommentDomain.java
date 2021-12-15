@@ -6,6 +6,8 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming;
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public class CommentDomain {
     private String id;
+    private String foodId;
+    private String foodName;
     private String userAppName;
     private String rating;
     private String comment;
@@ -58,5 +60,21 @@ public class CommentDomain {
 
     public void setDislikeNumber(String dislikeNumber) {
         this.dislikeNumber = dislikeNumber;
+    }
+
+    public String getFoodId() {
+        return foodId;
+    }
+
+    public void setFoodId(String foodId) {
+        this.foodId = foodId;
+    }
+
+    public String getFoodName() {
+        return foodName;
+    }
+
+    public void setFoodName(String foodName) {
+        this.foodName = foodName;
     }
 }

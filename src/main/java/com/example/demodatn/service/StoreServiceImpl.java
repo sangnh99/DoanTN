@@ -1,20 +1,18 @@
 package com.example.demodatn.service;
 
 import com.example.demodatn.constant.Error;
+import com.example.demodatn.domain.CommentDomain;
 import com.example.demodatn.domain.FoodDomain;
 import com.example.demodatn.domain.StoreDetailByFoodIdDomain;
 import com.example.demodatn.domain.StoreDetailDomain;
-import com.example.demodatn.entity.FoodEntity;
-import com.example.demodatn.entity.StoreEntity;
-import com.example.demodatn.entity.SubFoodTypeEntity;
+import com.example.demodatn.entity.*;
 import com.example.demodatn.exception.CustomException;
-import com.example.demodatn.repository.FoodRepository;
-import com.example.demodatn.repository.StoreRepository;
-import com.example.demodatn.repository.SubFoodTypeRepository;
+import com.example.demodatn.repository.*;
 import com.example.demodatn.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +29,15 @@ public class StoreServiceImpl {
 
     @Autowired
     private SubFoodTypeRepository subFoodTypeRepository;
+
+    @Autowired
+    private FoodRatingRepository foodRatingRepository;
+
+    @Autowired
+    private RatingRepository ratingRepository;
+
+    @Autowired
+    private UserAppRepository userAppRepository;
 
     public StoreDetailDomain getStoreDetail(String store){
         Long storeId = StringUtils.convertObjectToLongOrNull(store);
@@ -49,6 +56,28 @@ public class StoreServiceImpl {
         storeDetailDomain.setAddress(storeEntity.getAddress());
         storeDetailDomain.setPhone(storeEntity.getPhone());
         storeDetailDomain.setAvatar(storeEntity.getAvatar());
+        List<Long> listRatingIds = foodRatingRepository.getListRatingIdsFromStore(storeId);
+        List<CommentDomain> listComments = new ArrayList<>();
+        if (!CollectionUtils.isEmpty(listRatingIds)){
+            listComments = listRatingIds.stream().map(ratingId -> {
+                RatingEntity ratingEntity = ratingRepository.getById(ratingId);
+                CommentDomain commentDomain = new CommentDomain();
+                UserAppEntity userAppEntity = userAppRepository.getById(ratingEntity.getUserAppId());
+                FoodEntity foodEntity = foodRatingRepository.findFoodEntityByRatingId(ratingId);
+                commentDomain.setId(StringUtils.convertObjectToString(ratingEntity.getId()));
+                commentDomain.setFoodId(StringUtils.convertObjectToString(foodEntity.getId()));
+                commentDomain.setFoodName(foodEntity.getName());
+                commentDomain.setUserAppName(userAppEntity.getUsername());
+                commentDomain.setRating(StringUtils.convertObjectToString(ratingEntity.getRating()));
+                commentDomain.setComment(ratingEntity.getComment());
+                commentDomain.setLikeNumber(ratingEntity.getLikeNumber() == null ? "0" : StringUtils.convertObjectToString(ratingEntity.getLikeNumber()));
+                commentDomain.setDislikeNumber(ratingEntity.getDislikeNumber() == null ? "0" : StringUtils.convertObjectToString(ratingEntity.getDislikeNumber()));
+                return commentDomain;
+            }).filter(entity -> !StringUtils.isEmpty(entity.getComment())).collect(Collectors.toList());
+            storeDetailDomain.setListComments(listComments);
+        } else {
+            storeDetailDomain.setListComments(new ArrayList<>());
+        }
 
         List<SubFoodTypeEntity> listSubfoodType = subFoodTypeRepository.findAllByStoreId(storeEntity.getId()).stream().sorted((t1, t2) -> t1.getId().compareTo(t2.getId())).collect(Collectors.toList());
         List<FoodEntity> listFood = foodRepository.findAllByStoreId(storeEntity.getId());

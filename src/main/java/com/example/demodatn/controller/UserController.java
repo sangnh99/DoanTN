@@ -18,6 +18,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Controller;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
@@ -104,30 +105,7 @@ public class UserController {
 
     @GetMapping("/cart")
     public ResponseEntity<ResponseDataAPI> geUserCurrentCart(@RequestParam("id") String idStr){
-        UserAppEntity userApp = userAppRepository.getById(StringUtils.convertStringToLongOrNull(idStr));
-        if (userApp == null) {
-            throw new CustomException("Id cua user bi sai", "wrong user id", HttpStatus.BAD_REQUEST);
-        }
-
-        List<CartEntity> cartEntityList = cartRepository.findAllByUserAppId(userApp.getId());
-
-        List<CartDomain> listResult = cartEntityList.stream().map(t -> {
-            CartDomain domain = new CartDomain();
-//            domain.setCartId(StringUtils.convertObjectToString(t.getId()));
-            domain.setFoodId(StringUtils.convertObjectToString(t.getFoodId()));
-            FoodEntity foodEntity = foodRepository.findById(t.getFoodId()).orElse(null);
-            domain.setFoodTypeId(StringUtils.convertObjectToString(foodEntity.getFoodTypeId()));
-            domain.setFoodName(foodEntity.getName());
-            StoreEntity storeEntity = storeRepository.findById(foodEntity.getStoreId()).orElse(null);
-            domain.setStoreId(StringUtils.convertObjectToString(storeEntity.getId()));
-            domain.setStoreName(storeEntity.getName());
-            domain.setAmount(t.getAmount());
-            domain.setPrice(StringUtils.convertObjectToString(t.getPrice()));
-            domain.setAvatar(foodEntity.getAvatar());
-            return domain;
-        }).collect(Collectors.toList());
-
-        return ResponseEntity.ok(ResponseDataAPI.builder().data(listResult).build());
+        return ResponseEntity.ok(ResponseDataAPI.builder().data(userAppService.getUserCurrentCart(idStr)).build());
     }
     @PostMapping("/cart/add")
     public ResponseEntity<ResponseDataAPI> addToCart(@RequestBody AddToCartDomain domain){
@@ -151,7 +129,12 @@ public class UserController {
             }
             cartRepository.save(cartEntity);
         }
-        return ResponseEntity.ok(ResponseDataAPI.builder().build());
+        List<CartEntity> cartEntityList = cartRepository.findAllByUserAppId(userAppId);
+        long totalPrice = 0l;
+        if (!CollectionUtils.isEmpty(cartEntityList)){
+            totalPrice = cartEntityList.stream().reduce(0l, (a, b) -> a + b.getPrice()*b.getAmount(), Long::sum);
+        }
+        return ResponseEntity.ok(ResponseDataAPI.builder().data(totalPrice).build());
     }
 
     @PostMapping("/cart/delete-and-add")
