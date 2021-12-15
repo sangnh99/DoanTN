@@ -5,6 +5,7 @@ import com.example.demodatn.domain.ResponseDataAPI;
 import com.example.demodatn.domain.VoteDomain;
 import com.example.demodatn.service.FoodServiceImpl;
 //import io.swagger.annotations.ApiParam;
+import com.example.demodatn.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -54,5 +55,19 @@ public class FoodController {
         return ResponseEntity.ok(ResponseDataAPI.builder().build());
     }
 
+    @GetMapping("/{food_id}/store")
+    public ResponseEntity<ResponseDataAPI> getAllFoodOfStoreByFoodId(@PathVariable("food_id") String foodId){
+        return ResponseEntity.ok(ResponseDataAPI.builder().data(foodService.getAllFoodOfStoreByFoodId(foodId)).build());
+    }
 
+    @GetMapping("/search")
+    public ResponseEntity<ResponseDataAPI> getAllByValueSearch(
+            @RequestParam("value_search") String valueSearch, @RequestParam("type_search") String typeSearch, @RequestParam("offset") Integer offset){
+        if (offset == null || offset <= 1) {
+            offset = 0;
+        } else {
+            offset = offset - 1;
+        }
+        return ResponseEntity.ok(ResponseDataAPI.builder().data(foodService.getAllBySearchValue(valueSearch, typeSearch, offset)).message(typeSearch).build());
+    }
 }

@@ -2,18 +2,15 @@ package com.example.demodatn.service;
 
 import com.example.demodatn.constant.RoleConstant;
 import com.example.demodatn.domain.AddToCartDomain;
+import com.example.demodatn.domain.CartDomain;
 import com.example.demodatn.domain.RegisterDomain;
 import com.example.demodatn.domain.ValidateEmailDomain;
-import com.example.demodatn.entity.CartEntity;
-import com.example.demodatn.entity.FoodEntity;
-import com.example.demodatn.entity.UserAppEntity;
-import com.example.demodatn.entity.UserRoleEntity;
-import com.example.demodatn.repository.CartRepository;
-import com.example.demodatn.repository.FoodRepository;
-import com.example.demodatn.repository.UserAppRepository;
-import com.example.demodatn.repository.UserRoleRepository;
+import com.example.demodatn.entity.*;
+import com.example.demodatn.exception.CustomException;
+import com.example.demodatn.repository.*;
 import com.example.demodatn.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -21,6 +18,8 @@ import org.springframework.stereotype.Service;
 
 import javax.mail.internet.MimeMessage;
 import javax.transaction.Transactional;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class UserAppServiceImpl implements UserAppService {
@@ -39,6 +38,9 @@ public class UserAppServiceImpl implements UserAppService {
 
     @Autowired
     private CartRepository cartRepository;
+
+    @Autowired
+    private StoreRepository storeRepository;
 
     @Override
     public void sendEmail(String recipientEmail, String link) throws Exception {
@@ -155,6 +157,32 @@ public class UserAppServiceImpl implements UserAppService {
         userRoleEntity.setRoleId(RoleConstant.ROLE_USER.getNumber());
 
         userRoleRepository.save(userRoleEntity);
+    }
+
+    public List<CartDomain> getUserCurrentCart(String idStr){
+        UserAppEntity userApp = userAppRepository.getById(StringUtils.convertStringToLongOrNull(idStr));
+        if (userApp == null) {
+            throw new CustomException("Id cua user bi sai", "wrong user id", HttpStatus.BAD_REQUEST);
+        }
+
+        List<CartEntity> cartEntityList = cartRepository.findAllByUserAppId(userApp.getId());
+
+        List<CartDomain> listResult = cartEntityList.stream().map(t -> {
+            CartDomain domain = new CartDomain();
+//            domain.setCartId(StringUtils.convertObjectToString(t.getId()));
+            domain.setFoodId(StringUtils.convertObjectToString(t.getFoodId()));
+            FoodEntity foodEntity = foodRepository.findById(t.getFoodId()).orElse(null);
+            domain.setFoodTypeId(StringUtils.convertObjectToString(foodEntity.getFoodTypeId()));
+            domain.setFoodName(foodEntity.getName());
+            StoreEntity storeEntity = storeRepository.findById(foodEntity.getStoreId()).orElse(null);
+            domain.setStoreId(StringUtils.convertObjectToString(storeEntity.getId()));
+            domain.setStoreName(storeEntity.getName());
+            domain.setAmount(t.getAmount());
+            domain.setPrice(StringUtils.convertObjectToString(t.getPrice()));
+            domain.setAvatar(foodEntity.getAvatar());
+            return domain;
+        }).collect(Collectors.toList());
+        return listResult;
     }
 
     @Transactional
