@@ -13,6 +13,8 @@ public class FoodDomain {
     private String summaryRating;
     private String avatar;
     private String price;
+    private String isFavourite;
+
 
     public String getId() {
         return id;
@@ -76,5 +78,13 @@ public class FoodDomain {
 
     public void setPrice(String price) {
         this.price = price;
+    }
+
+    public String getIsFavourite() {
+        return isFavourite;
+    }
+
+    public void setIsFavourite(String isFavourite) {
+        this.isFavourite = isFavourite;
     }
 }

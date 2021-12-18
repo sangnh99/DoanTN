@@ -17,6 +17,7 @@ public class FoodWithCommentDomain {
     private String price;
     private String numberOfVote;
     private List<CommentDomain> listComments;
+    private Integer isFavourite;
 
     public String getFoodId() {
         return foodId;
@@ -96,5 +97,13 @@ public class FoodWithCommentDomain {
 
     public void setNumberOfVote(String numberOfVote) {
         this.numberOfVote = numberOfVote;
+    }
+
+    public Integer getIsFavourite() {
+        return isFavourite;
+    }
+
+    public void setIsFavourite(Integer isFavourite) {
+        this.isFavourite = isFavourite;
     }
 }

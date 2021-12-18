@@ -27,6 +27,8 @@ public class FoodEntity extends BaseEntity{
     private String avatar;
     @Column(name = "SUB_FOOD_TYPE_ID")
     private Long subFoodTypeId;
+    @Column(name = "DISCOUNT_PERCENT")
+    private Integer discountPercent;
 
     public Long getId() {
         return id;
@@ -90,5 +92,13 @@ public class FoodEntity extends BaseEntity{
 
     public void setSubFoodTypeId(Long subFoodTypeId) {
         this.subFoodTypeId = subFoodTypeId;
+    }
+
+    public Integer getDiscountPercent() {
+        return discountPercent;
+    }
+
+    public void setDiscountPercent(Integer discountPercent) {
+        this.discountPercent = discountPercent;
     }
 }

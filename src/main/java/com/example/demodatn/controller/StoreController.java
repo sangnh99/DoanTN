@@ -15,7 +15,7 @@ public class StoreController {
     private StoreServiceImpl storeService;
 
     @GetMapping("/{store_id}")
-    public ResponseEntity<ResponseDataAPI> getStoreDetail(@PathVariable("store_id") String store){
-        return ResponseEntity.ok(ResponseDataAPI.builder().data(storeService.getStoreDetail(store)).build());
+    public ResponseEntity<ResponseDataAPI> getStoreDetail(@PathVariable("store_id") String store, @RequestParam("user_app_id") String userApp){
+        return ResponseEntity.ok(ResponseDataAPI.builder().data(storeService.getStoreDetail(store, userApp)).build());
     }
 }

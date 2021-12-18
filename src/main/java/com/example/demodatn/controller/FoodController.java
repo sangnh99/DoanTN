@@ -45,8 +45,9 @@ public class FoodController {
     }
 
     @GetMapping("/{food_id}/detail")
-    public ResponseEntity<ResponseDataAPI> getFoodDetail(@PathVariable("food_id") String foodId){
-        return ResponseEntity.ok(ResponseDataAPI.builder().data(foodService.getFoodDetail(foodId)).build());
+    public ResponseEntity<ResponseDataAPI> getFoodDetail(@PathVariable("food_id") String foodId
+    , @RequestParam("user_app_id") String userApp){
+        return ResponseEntity.ok(ResponseDataAPI.builder().data(foodService.getFoodDetail(foodId, userApp)).build());
     }
 
     @PostMapping("/vote")

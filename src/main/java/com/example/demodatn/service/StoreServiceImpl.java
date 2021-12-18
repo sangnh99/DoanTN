@@ -1,6 +1,7 @@
 package com.example.demodatn.service;
 
 import com.example.demodatn.constant.Error;
+import com.example.demodatn.constant.FavouriteType;
 import com.example.demodatn.domain.CommentDomain;
 import com.example.demodatn.domain.FoodDomain;
 import com.example.demodatn.domain.StoreDetailByFoodIdDomain;
@@ -39,9 +40,13 @@ public class StoreServiceImpl {
     @Autowired
     private UserAppRepository userAppRepository;
 
-    public StoreDetailDomain getStoreDetail(String store){
+    @Autowired
+    private FavouriteRepository favouriteRepository;
+
+    public StoreDetailDomain getStoreDetail(String store, String userApp){
+        Long userAppId = StringUtils.convertStringToLongOrNull(userApp);
         Long storeId = StringUtils.convertObjectToLongOrNull(store);
-        if (storeId == null){
+        if (storeId == null || userAppId == null){
             throw new CustomException(Error.PARAMETER_INVALID.getMessage()
                     , Error.PARAMETER_INVALID.getCode(), HttpStatus.BAD_REQUEST);
         }
@@ -56,6 +61,12 @@ public class StoreServiceImpl {
         storeDetailDomain.setAddress(storeEntity.getAddress());
         storeDetailDomain.setPhone(storeEntity.getPhone());
         storeDetailDomain.setAvatar(storeEntity.getAvatar());
+        FavouriteEntity favouriteEntity = favouriteRepository.findByUserAppIdAndItemIdAndType(userAppId, storeId, FavouriteType.STORE.getValue());
+        if (favouriteEntity == null) {
+            storeDetailDomain.setIsFavourite(0);
+        } else {
+            storeDetailDomain.setIsFavourite(1);
+        }
         List<Long> listRatingIds = foodRatingRepository.getListRatingIdsFromStore(storeId);
         List<CommentDomain> listComments = new ArrayList<>();
         if (!CollectionUtils.isEmpty(listRatingIds)){

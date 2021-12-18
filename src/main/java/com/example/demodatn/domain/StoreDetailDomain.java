@@ -14,6 +14,7 @@ public class StoreDetailDomain {
     private String avatar;
     private List<StoreDetailByFoodIdDomain> listSubFoodType;
     private List<CommentDomain> listComments;
+    private Integer isFavourite;
 
     public String getId() {
         return id;
@@ -69,5 +70,13 @@ public class StoreDetailDomain {
 
     public void setListComments(List<CommentDomain> listComments) {
         this.listComments = listComments;
+    }
+
+    public Integer getIsFavourite() {
+        return isFavourite;
+    }
+
+    public void setIsFavourite(Integer isFavourite) {
+        this.isFavourite = isFavourite;
     }
 }

@@ -1,9 +1,7 @@
 package com.example.demodatn.service;
 
-import com.example.demodatn.constant.ColumnSortFood;
-import com.example.demodatn.constant.ConstantDefine;
+import com.example.demodatn.constant.*;
 import com.example.demodatn.constant.Error;
-import com.example.demodatn.constant.TypeSearch;
 import com.example.demodatn.domain.*;
 import com.example.demodatn.entity.*;
 import com.example.demodatn.exception.CustomException;
@@ -44,6 +42,9 @@ public class FoodServiceImpl {
 
     @Autowired
     private SubFoodTypeRepository subFoodTypeRepository;
+
+    @Autowired
+    private FavouriteRepository favouriteRepository;
 
     public List<FoodDomain> getListFoodByFoodType(String foodTypeStr, BasicRequest request){
         Long foodType = StringUtils.convertObjectToLongOrNull(foodTypeStr);
@@ -88,9 +89,10 @@ public class FoodServiceImpl {
         return responseList;
     }
 
-    public FoodWithCommentDomain getFoodDetail(String food) {
+    public FoodWithCommentDomain getFoodDetail(String food, String userApp) {
+        Long userAppId = StringUtils.convertStringToLongOrNull(userApp);
         Long foodId = StringUtils.convertObjectToLongOrNull(food);
-        if (foodId == null){
+        if (foodId == null || userAppId == null){
             throw new CustomException(Error.PARAMETER_INVALID.getMessage()
                     , Error.PARAMETER_INVALID.getCode(), HttpStatus.BAD_REQUEST);
         }
@@ -108,6 +110,12 @@ public class FoodServiceImpl {
         domain.setSummaryRating(t.getSummaryRating() == null ? "0" : StringUtils.convertObjectToString(t.getSummaryRating()));
         domain.setAvatar(t.getAvatar());
         domain.setPrice(StringUtils.convertObjectToString(t.getPrice()));
+        FavouriteEntity favouriteEntity = favouriteRepository.findByUserAppIdAndItemIdAndType(userAppId, foodId, FavouriteType.FOOD.getValue());
+        if (favouriteEntity != null){
+            domain.setIsFavourite(1);
+        } else {
+            domain.setIsFavourite(0);
+        }
         List<Long> listRatingIds = foodRatingRepository.getListRatingIdsFromFoodId(foodId);
         List<CommentDomain> listComments = new ArrayList<>();
         domain.setNumberOfVote("Chưa có lượt đánh giá");
