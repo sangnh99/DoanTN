@@ -180,6 +180,8 @@ public class UserAppServiceImpl implements UserAppService {
             domain.setAmount(t.getAmount());
             domain.setPrice(StringUtils.convertObjectToString(t.getPrice()));
             domain.setAvatar(foodEntity.getAvatar());
+            domain.setDiscountPercent(foodEntity.getDiscountPercent());
+            domain.setOriginalPrice(foodEntity.getOriginalPrice());
             return domain;
         }).collect(Collectors.toList());
         return listResult;

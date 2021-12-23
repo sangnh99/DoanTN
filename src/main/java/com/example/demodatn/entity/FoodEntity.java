@@ -29,6 +29,9 @@ public class FoodEntity extends BaseEntity{
     private Long subFoodTypeId;
     @Column(name = "DISCOUNT_PERCENT")
     private Integer discountPercent;
+    @Column(name = "ORIGINAL_PRICE")
+    private Long originalPrice;
+
 
     public Long getId() {
         return id;
@@ -100,5 +103,13 @@ public class FoodEntity extends BaseEntity{
 
     public void setDiscountPercent(Integer discountPercent) {
         this.discountPercent = discountPercent;
+    }
+
+    public Long getOriginalPrice() {
+        return originalPrice;
+    }
+
+    public void setOriginalPrice(Long originalPrice) {
+        this.originalPrice = originalPrice;
     }
 }

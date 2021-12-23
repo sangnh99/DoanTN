@@ -14,6 +14,8 @@ public class CartDomain {
     private Integer amount;
     private String price;
     private String avatar;
+    private Integer discountPercent;
+    private Long originalPrice;
 
     public void setAvatar(String avatar) {
         this.avatar = avatar;
@@ -84,5 +86,21 @@ public class CartDomain {
 
     public String getAvatar() {
         return avatar;
+    }
+
+    public Integer getDiscountPercent() {
+        return discountPercent;
+    }
+
+    public void setDiscountPercent(Integer discountPercent) {
+        this.discountPercent = discountPercent;
+    }
+
+    public Long getOriginalPrice() {
+        return originalPrice;
+    }
+
+    public void setOriginalPrice(Long originalPrice) {
+        this.originalPrice = originalPrice;
     }
 }

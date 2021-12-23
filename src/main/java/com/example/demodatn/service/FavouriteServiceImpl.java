@@ -9,8 +9,10 @@ import com.example.demodatn.domain.StoreDomain;
 import com.example.demodatn.entity.FavouriteEntity;
 import com.example.demodatn.entity.FoodEntity;
 import com.example.demodatn.entity.StoreEntity;
+import com.example.demodatn.entity.UserAppEntity;
 import com.example.demodatn.exception.CustomException;
 import com.example.demodatn.repository.*;
+import com.example.demodatn.util.CalculateDistanceUtils;
 import com.example.demodatn.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -19,6 +21,7 @@ import org.springframework.util.CollectionUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class FavouriteServiceImpl {
@@ -39,6 +42,9 @@ public class FavouriteServiceImpl {
 
     @Autowired
     private FavouriteRepository favouriteRepository;
+
+    @Autowired
+    private CalculateDistanceUtils calculateDistanceUtils;
 
     public void AddToFavorite(AddToFavouriteDomain domain){
         Long userAppId = StringUtils.convertStringToLongOrNull(domain.getUserAppId());
@@ -107,6 +113,8 @@ public class FavouriteServiceImpl {
             throw new CustomException(Error.PARAMETER_INVALID.getMessage()
                     , Error.PARAMETER_INVALID.getCode(), HttpStatus.BAD_REQUEST);
         }
+        UserAppEntity userAppEntity = userAppRepository.findById(userAppId).orElse(null);
+        Map<Long, Double> distanceMap = calculateDistanceUtils.getDistanceOfAllStores(userAppEntity);
         List<FavouriteEntity> listFavourite = favouriteRepository.findAllByUserAppId(userAppId);
         List<FoodDomain> listFoods= new ArrayList<>();
         List<StoreDomain> listStores = new ArrayList<>();
@@ -123,8 +131,9 @@ public class FavouriteServiceImpl {
                     storeDomain.setName(storeEntity.getName());
                     storeDomain.setId(StringUtils.convertObjectToString(storeEntity.getId()));
                     storeDomain.setPhone(storeEntity.getPhone());
-                    storeDomain.setAddress(storeEntity.getAddress());
+                    storeDomain.setAddress(storeEntity.getAddress().substring(0, storeEntity.getAddress().length() - 16));
                     storeDomain.setAvatar(storeEntity.getAvatar());
+                    storeDomain.setDistance(distanceMap.get(storeEntity.getId()));
                     listStores.add(storeDomain);
                 } else {
                     FoodEntity foodEntity = foodRepository.findById(entity.getItemId()).orElse(null);
@@ -141,6 +150,8 @@ public class FavouriteServiceImpl {
                     foodDomain.setSummaryRating(StringUtils.convertObjectToString(foodEntity.getSummaryRating()));
                     foodDomain.setAvatar(foodEntity.getAvatar());
                     foodDomain.setPrice(StringUtils.convertObjectToString(foodEntity.getPrice()));
+                    foodDomain.setDiscountPercent(foodEntity.getDiscountPercent());
+                    foodDomain.setDistance(distanceMap.get(foodEntity.getStoreId()));
                     listFoods.add(foodDomain);
                 }
             }

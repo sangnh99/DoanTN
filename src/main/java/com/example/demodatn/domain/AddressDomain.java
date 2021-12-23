@@ -4,13 +4,14 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
-public class StoreDomain {
+public class AddressDomain {
     private String id;
     private String name;
     private String address;
-    private String phone;
-    private String avatar;
-    private Double distance;
+    private Double latitude;
+    private Double longitude;
+    private Integer isActive;
+    private String note;
 
     public String getId() {
         return id;
@@ -36,27 +37,35 @@ public class StoreDomain {
         this.address = address;
     }
 
-    public String getPhone() {
-        return phone;
+    public Double getLatitude() {
+        return latitude;
     }
 
-    public void setPhone(String phone) {
-        this.phone = phone;
+    public void setLatitude(Double latitude) {
+        this.latitude = latitude;
     }
 
-    public String getAvatar() {
-        return avatar;
+    public Double getLongitude() {
+        return longitude;
     }
 
-    public void setAvatar(String avatar) {
-        this.avatar = avatar;
+    public void setLongitude(Double longitude) {
+        this.longitude = longitude;
     }
 
-    public Double getDistance() {
-        return distance;
+    public Integer getIsActive() {
+        return isActive;
     }
 
-    public void setDistance(Double distance) {
-        this.distance = distance;
+    public void setIsActive(Integer isActive) {
+        this.isActive = isActive;
+    }
+
+    public String getNote() {
+        return note;
+    }
+
+    public void setNote(String note) {
+        this.note = note;
     }
 }

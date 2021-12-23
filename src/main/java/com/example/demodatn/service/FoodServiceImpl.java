@@ -6,6 +6,7 @@ import com.example.demodatn.domain.*;
 import com.example.demodatn.entity.*;
 import com.example.demodatn.exception.CustomException;
 import com.example.demodatn.repository.*;
+import com.example.demodatn.util.CalculateDistanceUtils;
 import com.example.demodatn.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -16,10 +17,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -46,7 +44,17 @@ public class FoodServiceImpl {
     @Autowired
     private FavouriteRepository favouriteRepository;
 
-    public List<FoodDomain> getListFoodByFoodType(String foodTypeStr, BasicRequest request){
+    @Autowired
+    private CalculateDistanceUtils calculateDistanceUtils;
+
+    public List<FoodDomain> getListFoodByFoodType(String userApp, String foodTypeStr, BasicRequest request){
+        Long userAppId = StringUtils.convertStringToLongOrNull(userApp);
+        if (userAppId == null){
+            throw new CustomException(Error.PARAMETER_INVALID.getMessage()
+                    , Error.PARAMETER_INVALID.getCode(), HttpStatus.BAD_REQUEST);
+        }
+        UserAppEntity userAppEntity = userAppRepository.findById(userAppId).orElse(null);
+        Map<Long, Double> distanceMap = calculateDistanceUtils.getDistanceOfAllStores(userAppEntity);
         Long foodType = StringUtils.convertObjectToLongOrNull(foodTypeStr);
         if (foodType == null){
             throw new CustomException(Error.PARAMETER_INVALID.getMessage()
@@ -83,6 +91,9 @@ public class FoodServiceImpl {
                     domain.setSummaryRating(StringUtils.convertObjectToString(t.getSummaryRating()));
                     domain.setAvatar(t.getAvatar());
                     domain.setPrice(StringUtils.convertObjectToString(t.getPrice()));
+                    domain.setDiscountPercent(t.getDiscountPercent());
+                    domain.setOriginalPrice(t.getOriginalPrice());
+                    domain.setDistance(distanceMap.get(t.getStoreId()));
                     return domain;
                 }
         ).collect(Collectors.toList());
@@ -110,6 +121,9 @@ public class FoodServiceImpl {
         domain.setSummaryRating(t.getSummaryRating() == null ? "0" : StringUtils.convertObjectToString(t.getSummaryRating()));
         domain.setAvatar(t.getAvatar());
         domain.setPrice(StringUtils.convertObjectToString(t.getPrice()));
+        domain.setDiscountPercent(t.getDiscountPercent());
+        domain.setOriginalPrice(t.getOriginalPrice());
+        domain.setDistance(calculateDistanceUtils.getDistanceOfOnlyOneStore(userAppId, t.getStoreId()));
         FavouriteEntity favouriteEntity = favouriteRepository.findByUserAppIdAndItemIdAndType(userAppId, foodId, FavouriteType.FOOD.getValue());
         if (favouriteEntity != null){
             domain.setIsFavourite(1);
@@ -159,9 +173,10 @@ public class FoodServiceImpl {
         ratingRepository.save(ratingEntity);
     }
 
-    public List<StoreDetailByFoodIdDomain> getAllFoodOfStoreByFoodId(String food) {
+    public List<StoreDetailByFoodIdDomain> getAllFoodOfStoreByFoodId(String food, String userApp) {
+        Long userAppId = StringUtils.convertStringToLongOrNull(userApp);
         Long foodId = StringUtils.convertObjectToLongOrNull(food);
-        if (foodId == null) {
+        if (foodId == null || userAppId == null) {
             throw new CustomException(Error.PARAMETER_INVALID.getMessage()
                     , Error.PARAMETER_INVALID.getCode(), HttpStatus.BAD_REQUEST);
         }
@@ -170,6 +185,7 @@ public class FoodServiceImpl {
             throw new CustomException(Error.PARAMETER_INVALID.getMessage()
                     , Error.PARAMETER_INVALID.getCode(), HttpStatus.BAD_REQUEST);
         }
+        Double distance = calculateDistanceUtils.getDistanceOfOnlyOneStore(userAppId, foodEntity.getStoreId());
         StoreEntity storeEntity = storeRepository.getById(foodEntity.getStoreId());
         List<SubFoodTypeEntity> listSubfoodType = subFoodTypeRepository.findAllByStoreId(storeEntity.getId()).stream().sorted((t1, t2) -> t1.getId().compareTo(t2.getId())).collect(Collectors.toList());
         List<FoodEntity> listFood = foodRepository.findAllByStoreId(storeEntity.getId());
@@ -191,6 +207,9 @@ public class FoodServiceImpl {
                         foodDomain.setSummaryRating(StringUtils.convertObjectToString(t.getSummaryRating()));
                         foodDomain.setAvatar(t.getAvatar());
                         foodDomain.setPrice(StringUtils.convertObjectToString(t.getPrice()));
+                        foodDomain.setDiscountPercent(t.getDiscountPercent());
+                        foodDomain.setOriginalPrice(t.getOriginalPrice());
+                        foodDomain.setDistance(distance);
                         return foodDomain;
                     })
                     .collect(Collectors.toList()));
@@ -199,7 +218,9 @@ public class FoodServiceImpl {
         return listResult;
     }
 
-    public List<Object> getAllBySearchValue(String valueSearchOriginal, String typeSearchStr, Integer offset){
+    public List<Object> getAllBySearchValue(String valueSearchOriginal, String typeSearchStr, Integer offset, String userApp){
+        Long userAppId = StringUtils.convertStringToLongOrNull(userApp);
+        UserAppEntity userAppEntity = userAppRepository.findById(userAppId).orElse(null);
         Integer typeSearch = StringUtils.convertStringToIntegerOrNull(typeSearchStr);
         if (typeSearch == null){
             throw new CustomException(Error.PARAMETER_INVALID.getMessage()
@@ -210,7 +231,7 @@ public class FoodServiceImpl {
 
         Pageable pageable = PageRequest.of(offset, 12, sort);
 
-
+        Map<Long, Double> distanceMap = calculateDistanceUtils.getDistanceOfAllStores(userAppEntity);
         String valueSearch = valueSearchOriginal.trim().toLowerCase(Locale.ROOT);
         if (TypeSearch.STORE.getValue().equals(typeSearch)){
             Page<StoreEntity> listStore = storeRepository.findStoreBySearchValue(valueSearch, pageable);
@@ -222,6 +243,7 @@ public class FoodServiceImpl {
                     storeDomain.setAvatar(t.getAvatar());
                     storeDomain.setAddress(t.getAddress());
                     storeDomain.setPhone(t.getPhone());
+                    storeDomain.setDistance(calculateDistanceUtils.getDistanceOfOnlyOneStore(userAppId, t.getId()));
                     return storeDomain;
                 }).collect(Collectors.toList());
             }
@@ -238,6 +260,9 @@ public class FoodServiceImpl {
                     domain.setSummaryRating(StringUtils.convertObjectToString(t.getSummaryRating()));
                     domain.setAvatar(t.getAvatar());
                     domain.setPrice(StringUtils.convertObjectToString(t.getPrice()));
+                    domain.setDiscountPercent(t.getDiscountPercent());
+                    domain.setOriginalPrice(t.getOriginalPrice());
+                    domain.setDistance(distanceMap.get(t.getStoreId()));
                     return domain;
                 }).collect(Collectors.toList());
             }

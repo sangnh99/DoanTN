@@ -5,26 +5,26 @@ import org.hibernate.annotations.Where;
 import javax.persistence.*;
 
 @Entity
-@Table(name = "STORE")
+@Table(name = "DELIVERY_ADDRESS")
 @Where(clause = "is_deleted = 0")
-public class StoreEntity extends BaseEntity{
+public class DeliveryAddressEntity extends BaseEntity{
     @Id
     @Column(name = "ID")
-    @SequenceGenerator(name = "STORE_SEQ", sequenceName = "STORE_SEQ", allocationSize = 1)
-    @GeneratedValue(strategy = GenerationType.AUTO, generator = "STORE_SEQ")
+    @SequenceGenerator(name = "DELIVERY_ADDRESS_SEQ", sequenceName = "DELIVERY_ADDRESS_SEQ", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "DELIVERY_ADDRESS_SEQ")
     private Long id;
+    @Column(name = "USER_APP_ID")
+    private Long userAppId;
     @Column(name = "NAME")
     private String name;
     @Column(name = "ADDRESS")
     private String address;
-    @Column(name = "PHONE")
-    private String phone;
-    @Column(name = "AVATAR")
-    private String avatar;
     @Column(name = "LATITUDE")
     private Double latitude;
     @Column(name = "LONGITUDE")
     private Double longitude;
+    @Column(name = "NOTE")
+    private String note;
 
     public Long getId() {
         return id;
@@ -32,6 +32,14 @@ public class StoreEntity extends BaseEntity{
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public Long getUserAppId() {
+        return userAppId;
+    }
+
+    public void setUserAppId(Long userAppId) {
+        this.userAppId = userAppId;
     }
 
     public String getName() {
@@ -50,22 +58,6 @@ public class StoreEntity extends BaseEntity{
         this.address = address;
     }
 
-    public String getPhone() {
-        return phone;
-    }
-
-    public void setPhone(String phone) {
-        this.phone = phone;
-    }
-
-    public String getAvatar() {
-        return avatar;
-    }
-
-    public void setAvatar(String avatar) {
-        this.avatar = avatar;
-    }
-
     public Double getLatitude() {
         return latitude;
     }
@@ -80,5 +72,13 @@ public class StoreEntity extends BaseEntity{
 
     public void setLongitude(Double longitude) {
         this.longitude = longitude;
+    }
+
+    public String getNote() {
+        return note;
+    }
+
+    public void setNote(String note) {
+        this.note = note;
     }
 }

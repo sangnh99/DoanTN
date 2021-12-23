@@ -14,6 +14,9 @@ public class FoodDomain {
     private String avatar;
     private String price;
     private String isFavourite;
+    private Integer discountPercent;
+    private Long originalPrice;
+    private Double distance;
 
 
     public String getId() {
@@ -86,5 +89,29 @@ public class FoodDomain {
 
     public void setIsFavourite(String isFavourite) {
         this.isFavourite = isFavourite;
+    }
+
+    public Integer getDiscountPercent() {
+        return discountPercent;
+    }
+
+    public void setDiscountPercent(Integer discountPercent) {
+        this.discountPercent = discountPercent;
+    }
+
+    public Long getOriginalPrice() {
+        return originalPrice;
+    }
+
+    public void setOriginalPrice(Long originalPrice) {
+        this.originalPrice = originalPrice;
+    }
+
+    public Double getDistance() {
+        return distance;
+    }
+
+    public void setDistance(Double distance) {
+        this.distance = distance;
     }
 }

@@ -3,12 +3,19 @@ package com.example.demodatn.controller;
 import com.example.demodatn.domain.BasicRequest;
 import com.example.demodatn.domain.ResponseDataAPI;
 import com.example.demodatn.domain.VoteDomain;
+import com.example.demodatn.entity.FoodEntity;
+import com.example.demodatn.repository.FoodRepository;
+import com.example.demodatn.repository.UserAppRepository;
 import com.example.demodatn.service.FoodServiceImpl;
 //import io.swagger.annotations.ApiParam;
+import com.example.demodatn.util.CalculateDistanceUtils;
 import com.example.demodatn.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.io.IOException;
+import java.util.List;
 
 @CrossOrigin("*")
 @RestController
@@ -18,8 +25,12 @@ public class FoodController {
     @Autowired
     private FoodServiceImpl foodService;
 
+    @Autowired
+    private FoodRepository foodRepository;
+
     @GetMapping("/{food_type}")
     public ResponseEntity<ResponseDataAPI> getFoodByFoodType(@PathVariable("food_type") String foodType,
+                                                             @RequestParam(value = "user_app_id", required = false)  String userApp,
                                                              @RequestParam(value = "offset", required = false)  Integer offset,
                                                              @RequestParam(value = "limit", required = false)  Integer limit,
                                                              @RequestParam(value = "column_sort", required=false) String columnSort,
@@ -41,7 +52,7 @@ public class FoodController {
         request.setColumnSort(columnSort);
         request.setTypeSort(typeSort);
         request.setValueSearch(searchValue);
-        return ResponseEntity.ok(ResponseDataAPI.builder().data(foodService.getListFoodByFoodType(foodType, request)).build());
+        return ResponseEntity.ok(ResponseDataAPI.builder().data(foodService.getListFoodByFoodType(userApp, foodType, request)).build());
     }
 
     @GetMapping("/{food_id}/detail")
@@ -57,18 +68,18 @@ public class FoodController {
     }
 
     @GetMapping("/{food_id}/store")
-    public ResponseEntity<ResponseDataAPI> getAllFoodOfStoreByFoodId(@PathVariable("food_id") String foodId){
-        return ResponseEntity.ok(ResponseDataAPI.builder().data(foodService.getAllFoodOfStoreByFoodId(foodId)).build());
+    public ResponseEntity<ResponseDataAPI> getAllFoodOfStoreByFoodId(@PathVariable("food_id") String foodId, @RequestParam(value = "user_app_id", required = false)  String userApp){
+        return ResponseEntity.ok(ResponseDataAPI.builder().data(foodService.getAllFoodOfStoreByFoodId(foodId, userApp)).build());
     }
 
     @GetMapping("/search")
     public ResponseEntity<ResponseDataAPI> getAllByValueSearch(
-            @RequestParam("value_search") String valueSearch, @RequestParam("type_search") String typeSearch, @RequestParam("offset") Integer offset){
+            @RequestParam("value_search") String valueSearch, @RequestParam("type_search") String typeSearch, @RequestParam("offset") Integer offset, @RequestParam(value = "user_app_id", required = false)  String userApp){
         if (offset == null || offset <= 1) {
             offset = 0;
         } else {
             offset = offset - 1;
         }
-        return ResponseEntity.ok(ResponseDataAPI.builder().data(foodService.getAllBySearchValue(valueSearch, typeSearch, offset)).message(typeSearch).build());
+        return ResponseEntity.ok(ResponseDataAPI.builder().data(foodService.getAllBySearchValue(valueSearch, typeSearch, offset, userApp)).message(typeSearch).build());
     }
 }
