@@ -34,6 +34,8 @@ public class UserAppEntity extends BaseEntity{
     private String verifyEmailToken;
     @Column(name = "ACTIVE_ADDRESS_ID")
     private Long activeAddressId;
+    @Column(name = "IS_LOCKED")
+    private Integer isLocked;
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @JoinColumn(name = "USER_ID", insertable = false, updatable = false)
@@ -135,5 +137,13 @@ public class UserAppEntity extends BaseEntity{
 
     public void setActiveAddressId(Long activeAddressId) {
         this.activeAddressId = activeAddressId;
+    }
+
+    public Integer getIsLocked() {
+        return isLocked;
+    }
+
+    public void setIsLocked(Integer isLocked) {
+        this.isLocked = isLocked;
     }
 }

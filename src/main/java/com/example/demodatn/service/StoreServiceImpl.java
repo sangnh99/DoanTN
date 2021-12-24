@@ -9,6 +9,7 @@ import com.example.demodatn.domain.StoreDetailDomain;
 import com.example.demodatn.entity.*;
 import com.example.demodatn.exception.CustomException;
 import com.example.demodatn.repository.*;
+import com.example.demodatn.util.CalculateDistanceUtils;
 import com.example.demodatn.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -43,6 +44,9 @@ public class StoreServiceImpl {
     @Autowired
     private FavouriteRepository favouriteRepository;
 
+    @Autowired
+    private CalculateDistanceUtils calculateDistanceUtils;
+
     public StoreDetailDomain getStoreDetail(String store, String userApp){
         Long userAppId = StringUtils.convertStringToLongOrNull(userApp);
         Long storeId = StringUtils.convertObjectToLongOrNull(store);
@@ -50,6 +54,8 @@ public class StoreServiceImpl {
             throw new CustomException(Error.PARAMETER_INVALID.getMessage()
                     , Error.PARAMETER_INVALID.getCode(), HttpStatus.BAD_REQUEST);
         }
+
+        Double distance = calculateDistanceUtils.getDistanceOfOnlyOneStore(userAppId, storeId);
         StoreEntity storeEntity = storeRepository.getById(storeId);
         if (storeEntity == null){
             throw new CustomException(Error.PARAMETER_INVALID.getMessage()
@@ -110,6 +116,7 @@ public class StoreServiceImpl {
                         foodDomain.setSummaryRating(StringUtils.convertObjectToString(t.getSummaryRating()));
                         foodDomain.setAvatar(t.getAvatar());
                         foodDomain.setPrice(StringUtils.convertObjectToString(t.getPrice()));
+                        foodDomain.setDistance(distance);
                         return foodDomain;
                     })
                     .collect(Collectors.toList()));

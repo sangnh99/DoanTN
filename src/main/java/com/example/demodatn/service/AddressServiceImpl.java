@@ -1,7 +1,9 @@
 package com.example.demodatn.service;
 
 import com.example.demodatn.constant.Error;
+import com.example.demodatn.constant.IsLocked;
 import com.example.demodatn.domain.AddAddressDomain;
+import com.example.demodatn.domain.AddAddressNewUserDomain;
 import com.example.demodatn.domain.AddressDomain;
 import com.example.demodatn.domain.ChangeActiveAddressDomain;
 import com.example.demodatn.entity.DeliveryAddressEntity;
@@ -137,5 +139,26 @@ public class AddressServiceImpl {
         }
         userAppRepository.save(userAppEntity);
         return getListAddressOfUser(userApp);
+    }
+
+    public void addNewAddressNewUser(AddAddressNewUserDomain domain) {
+        UserAppEntity userAppEntity = userAppRepository.findByEmail(domain.getEmail());
+        if (userAppEntity == null){
+            throw new CustomException(Error.PARAMETER_INVALID.getMessage()
+                    , Error.PARAMETER_INVALID.getCode(), HttpStatus.BAD_REQUEST);
+        }
+        DeliveryAddressEntity deliveryAddressEntity = new DeliveryAddressEntity();
+        deliveryAddressEntity.setUserAppId(userAppEntity.getId());
+        deliveryAddressEntity.setName(domain.getAddressName());
+        deliveryAddressEntity.setNote(domain.getAddressNote());
+        deliveryAddressEntity.setAddress(domain.getAddressSave());
+        deliveryAddressEntity.setLatitude(domain.getLat());
+        deliveryAddressEntity.setLongitude(domain.getLng());
+
+        deliveryAddressEntity = deliveryAddressRepository.save(deliveryAddressEntity);
+        userAppEntity.setActiveAddressId(deliveryAddressEntity.getId());
+        userAppEntity.setIsLocked(IsLocked.FALSE.getValue());
+        userAppEntity.setAvatar("https://t4.ftcdn.net/jpg/03/46/93/61/360_F_346936114_RaxE6OQogebgAWTalE1myseY1Hbb5qPM.jpg");
+        userAppRepository.save(userAppEntity);
     }
 }

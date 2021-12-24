@@ -1,5 +1,6 @@
 package com.example.demodatn.service;
 
+import com.example.demodatn.constant.IsLocked;
 import com.example.demodatn.constant.RoleConstant;
 import com.example.demodatn.domain.AddToCartDomain;
 import com.example.demodatn.domain.CartDomain;
@@ -134,6 +135,7 @@ public class UserAppServiceImpl implements UserAppService {
         userAppEntity.setPhone(domain.getPhone());
         userAppEntity.setFullName(domain.getFullname());
         userAppEntity.setVerifyEmailToken(token);
+        userAppEntity.setIsLocked(IsLocked.TRUE.getValue());
         UserAppEntity user = userAppRepository.save(userAppEntity);
     }
 
