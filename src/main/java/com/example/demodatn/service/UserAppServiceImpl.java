@@ -9,6 +9,7 @@ import com.example.demodatn.domain.ValidateEmailDomain;
 import com.example.demodatn.entity.*;
 import com.example.demodatn.exception.CustomException;
 import com.example.demodatn.repository.*;
+import com.example.demodatn.util.CalculateDistanceUtils;
 import com.example.demodatn.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -16,6 +17,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 import javax.mail.internet.MimeMessage;
 import javax.transaction.Transactional;
@@ -42,6 +44,9 @@ public class UserAppServiceImpl implements UserAppService {
 
     @Autowired
     private StoreRepository storeRepository;
+
+    @Autowired
+    private CalculateDistanceUtils calculateDistanceUtils;
 
     @Override
     public void sendEmail(String recipientEmail, String link) throws Exception {
@@ -167,8 +172,14 @@ public class UserAppServiceImpl implements UserAppService {
             throw new CustomException("Id cua user bi sai", "wrong user id", HttpStatus.BAD_REQUEST);
         }
 
-        List<CartEntity> cartEntityList = cartRepository.findAllByUserAppId(userApp.getId());
+        List<CartEntity> cartEntityList = cartRepository.getAllByUserAppIdWithOrder(userApp.getId());
+        Double distance = 0.0;
+        if (!CollectionUtils.isEmpty(cartEntityList)){
+            FoodEntity foodEntity = foodRepository.findById(cartEntityList.get(0).getFoodId()).orElse(null);
+            distance = calculateDistanceUtils.getDistanceOfOnlyOneStore(StringUtils.convertStringToLongOrNull(idStr), foodEntity.getStoreId());
+        }
 
+        Double finalDistance = distance;
         List<CartDomain> listResult = cartEntityList.stream().map(t -> {
             CartDomain domain = new CartDomain();
 //            domain.setCartId(StringUtils.convertObjectToString(t.getId()));
@@ -184,6 +195,9 @@ public class UserAppServiceImpl implements UserAppService {
             domain.setAvatar(foodEntity.getAvatar());
             domain.setDiscountPercent(foodEntity.getDiscountPercent());
             domain.setOriginalPrice(foodEntity.getOriginalPrice());
+            domain.setNote(t.getNote());
+            domain.setDistance(finalDistance);
+            System.out.println(finalDistance);
             return domain;
         }).collect(Collectors.toList());
         return listResult;
@@ -203,6 +217,7 @@ public class UserAppServiceImpl implements UserAppService {
         cartEntity.setFoodId(foodId);
         cartEntity.setAmount(number);
         cartEntity.setPrice(foodEntity.getPrice());
+        cartEntity.setNote(domain.getNote());
 
         cartRepository.save(cartEntity);
     }

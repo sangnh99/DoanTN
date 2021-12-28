@@ -21,6 +21,8 @@ public class CartEntity extends BaseEntity{
     private Integer amount;
     @Column(name = "PRICE")
     private Long price;
+    @Column(name = "NOTE")
+    private String note;
 
     public Long getId() {
         return id;
@@ -60,5 +62,13 @@ public class CartEntity extends BaseEntity{
 
     public void setPrice(Long price) {
         this.price = price;
+    }
+
+    public String getNote() {
+        return note;
+    }
+
+    public void setNote(String note) {
+        this.note = note;
     }
 }

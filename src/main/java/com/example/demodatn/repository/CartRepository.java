@@ -13,6 +13,9 @@ public interface CartRepository extends JpaRepository<CartEntity, Long> {
 
     List<CartEntity> findAllByUserAppId(Long id);
 
+    @Query(value = "select c from CartEntity c where c.userAppId = ?1 order by c.id")
+    List<CartEntity> getAllByUserAppIdWithOrder(Long id);
+
     CartEntity findByUserAppIdAndFoodId(Long userId, Long foodId);
 
     @Modifying

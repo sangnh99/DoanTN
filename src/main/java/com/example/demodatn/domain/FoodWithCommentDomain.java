@@ -21,6 +21,7 @@ public class FoodWithCommentDomain {
     private Integer discountPercent;
     private Long originalPrice;
     private Double distance;
+    private String note;
 
     public String getFoodId() {
         return foodId;
@@ -132,5 +133,13 @@ public class FoodWithCommentDomain {
 
     public void setDistance(Double distance) {
         this.distance = distance;
+    }
+
+    public String getNote() {
+        return note;
+    }
+
+    public void setNote(String note) {
+        this.note = note;
     }
 }

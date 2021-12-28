@@ -22,6 +22,11 @@ public class AddressController {
         return ResponseEntity.ok(ResponseDataAPI.builder().data(addressService.getListAddressOfUser(userApp)).build());
     }
 
+    @GetMapping("/{user_app_id}/get-active-address")
+    public ResponseEntity<ResponseDataAPI> getActiveAddress(@PathVariable("user_app_id") String userApp){
+        return ResponseEntity.ok(ResponseDataAPI.builder().data(addressService.getActiveAddress(userApp)).build());
+    }
+
     @PostMapping("/{user_app_id}/active-address")
     public ResponseEntity<ResponseDataAPI> changeActiveAddress(@PathVariable("user_app_id") String userApp, @RequestBody ChangeActiveAddressDomain domain){
         return ResponseEntity.ok(ResponseDataAPI.builder().data(addressService.changeActiveAddress(userApp, domain)).build());

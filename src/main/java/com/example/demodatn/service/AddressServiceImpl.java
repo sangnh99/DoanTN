@@ -17,6 +17,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
+import javax.print.DocFlavor;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -160,5 +161,39 @@ public class AddressServiceImpl {
         userAppEntity.setIsLocked(IsLocked.FALSE.getValue());
         userAppEntity.setAvatar("https://t4.ftcdn.net/jpg/03/46/93/61/360_F_346936114_RaxE6OQogebgAWTalE1myseY1Hbb5qPM.jpg");
         userAppRepository.save(userAppEntity);
+    }
+
+    public AddressDomain getActiveAddress(String userApp) {
+        Long userAppId = StringUtils.convertStringToLongOrNull(userApp);
+        if (userAppId == null) {
+            throw new CustomException(Error.PARAMETER_INVALID.getMessage()
+                    , Error.PARAMETER_INVALID.getCode(), HttpStatus.BAD_REQUEST);
+        }
+        UserAppEntity userAppEntity = userAppRepository.findById(userAppId).orElse(null);
+        if (userAppEntity == null) {
+            throw new CustomException(Error.PARAMETER_INVALID.getMessage()
+                    , Error.PARAMETER_INVALID.getCode(), HttpStatus.BAD_REQUEST);
+        }
+        Long userAddressId = userAppEntity.getActiveAddressId();
+        if (userAddressId == null){
+            throw new CustomException(Error.PARAMETER_INVALID.getMessage()
+                    , Error.PARAMETER_INVALID.getCode(), HttpStatus.BAD_REQUEST);
+        }
+        DeliveryAddressEntity deliveryAddressEntity = deliveryAddressRepository.findById(userAddressId).orElse(null);
+        if (deliveryAddressEntity == null){
+            throw new CustomException(Error.PARAMETER_INVALID.getMessage()
+                    , Error.PARAMETER_INVALID.getCode(), HttpStatus.BAD_REQUEST);
+        }
+
+        AddressDomain domain = new AddressDomain();
+        domain.setId(StringUtils.convertObjectToString(deliveryAddressEntity.getId()));
+        domain.setIsActive(1);
+        domain.setAddress(deliveryAddressEntity.getAddress());
+        domain.setLongitude(deliveryAddressEntity.getLongitude());
+        domain.setLatitude(deliveryAddressEntity.getLatitude());
+        domain.setName(deliveryAddressEntity.getName());
+        domain.setNote(deliveryAddressEntity.getNote());
+
+        return domain;
     }
 }

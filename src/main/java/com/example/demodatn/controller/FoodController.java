@@ -82,4 +82,10 @@ public class FoodController {
         }
         return ResponseEntity.ok(ResponseDataAPI.builder().data(foodService.getAllBySearchValue(valueSearch, typeSearch, offset, userApp)).message(typeSearch).build());
     }
+
+    @GetMapping("/get-list-near-food")
+    public ResponseEntity<ResponseDataAPI> getListNearFood(@RequestParam("user_app_id") String userAppId){
+        return ResponseEntity.ok(ResponseDataAPI.builder().data(foodService.geListNearFood(userAppId)).build());
+    }
+
 }
