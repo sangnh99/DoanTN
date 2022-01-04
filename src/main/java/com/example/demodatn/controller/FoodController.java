@@ -1,5 +1,6 @@
 package com.example.demodatn.controller;
 
+import com.example.demodatn.domain.AddRatingDomain;
 import com.example.demodatn.domain.BasicRequest;
 import com.example.demodatn.domain.ResponseDataAPI;
 import com.example.demodatn.domain.VoteDomain;
@@ -86,6 +87,11 @@ public class FoodController {
     @GetMapping("/get-list-near-food")
     public ResponseEntity<ResponseDataAPI> getListNearFood(@RequestParam("user_app_id") String userAppId){
         return ResponseEntity.ok(ResponseDataAPI.builder().data(foodService.geListNearFood(userAppId)).build());
+    }
+
+    @PostMapping("/{food_id}/add-rating")
+    public ResponseEntity<ResponseDataAPI> addNewRatingForFood(@PathVariable("food_id") String food, @RequestBody AddRatingDomain domain){
+        return ResponseEntity.ok(ResponseDataAPI.builder().data(foodService.addNewRatingForFood(food, domain)).build());
     }
 
 }

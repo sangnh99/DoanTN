@@ -31,6 +31,7 @@ public class DateTimeUtils {
     public static String YYYYMMDDhhmmssSSS = "yyyy-MM-dd HH:mm:ss:SSS";
     public static String YYYYMMDDhhmmssSSS1 = "yyyy-MM-dd HH:mm:ss.SSS";
     public static String YYYYMMDDhhmmssSSS2 = "yyyy-MM-dd HH:mm:ss";
+    public static String YYYYMMDDhhmm = "yyyy-MM-dd HH:mm";
     public static String MMddyyy = "MM/dd/yyy";
     public static String YYYYMMDD = "yyyy-MM-dd";
     public static String hhmmssSSS = "HH:mm:ss:SSS";

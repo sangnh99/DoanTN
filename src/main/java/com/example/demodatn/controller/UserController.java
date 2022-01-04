@@ -175,4 +175,16 @@ public class UserController {
         userAppService.deleteAndAddToCart(domain);
         return ResponseEntity.ok(ResponseDataAPI.builder().data(userAppService.getUserCurrentCart(domain.getUserAppId())).build());
     }
+
+    @GetMapping("/transaction")
+    public ResponseEntity<ResponseDataAPI> getUserTransaction(@RequestParam("user_app_id") String userApp){
+        ResponseDataAPI response = new ResponseDataAPI();
+        response.setData(userAppService.getUserTransaction(userApp));
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/payment/direct")
+    public ResponseEntity<ResponseDataAPI> paymentDirect(@RequestBody DirectPaymentDomain domain){
+        return ResponseEntity.ok(ResponseDataAPI.builder().data(userAppService.paymentDirect(domain)).build());
+    }
 }

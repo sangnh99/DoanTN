@@ -73,14 +73,13 @@ public class StoreServiceImpl {
         } else {
             storeDetailDomain.setIsFavourite(1);
         }
-        List<Long> listRatingIds = foodRatingRepository.getListRatingIdsFromStore(storeId);
+        List<RatingEntity> listRatingIds = ratingRepository.getListRatingOfStore(storeId);
         List<CommentDomain> listComments = new ArrayList<>();
         if (!CollectionUtils.isEmpty(listRatingIds)){
-            listComments = listRatingIds.stream().map(ratingId -> {
-                RatingEntity ratingEntity = ratingRepository.getById(ratingId);
+            listComments = listRatingIds.stream().map(ratingEntity -> {
                 CommentDomain commentDomain = new CommentDomain();
                 UserAppEntity userAppEntity = userAppRepository.getById(ratingEntity.getUserAppId());
-                FoodEntity foodEntity = foodRatingRepository.findFoodEntityByRatingId(ratingId);
+                FoodEntity foodEntity = foodRepository.findById(ratingEntity.getFoodId()).orElse(null);
                 commentDomain.setId(StringUtils.convertObjectToString(ratingEntity.getId()));
                 commentDomain.setFoodId(StringUtils.convertObjectToString(foodEntity.getId()));
                 commentDomain.setFoodName(foodEntity.getName());

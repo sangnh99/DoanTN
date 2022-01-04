@@ -16,13 +16,16 @@ public class TransactionEntity extends BaseEntity{
     @Column(name = "USER_APP_ID")
     private Long userAppId;
     @Column(name = "PAYMENT_METHOD")
-    private Integer paymentMethod;
-    @Column(name = "DELIVERY_ADDRESS")
-    private String deliveryAddress;
+    private String paymentMethod;
     @Column(name = "COMMENT")
     private String comment;
     @Column(name = "TOTAL")
     private Long total;
+    // new
+    @Column(name = "DISTANCE")
+    private Double distance;
+    @Column(name = "DELIVERY_ADDRESS_ID")
+    private Long deliveryAddressId;
 
     public Long getId() {
         return id;
@@ -40,20 +43,12 @@ public class TransactionEntity extends BaseEntity{
         this.userAppId = userAppId;
     }
 
-    public Integer getPaymentMethod() {
+    public String getPaymentMethod() {
         return paymentMethod;
     }
 
-    public void setPaymentMethod(Integer paymentMethod) {
+    public void setPaymentMethod(String paymentMethod) {
         this.paymentMethod = paymentMethod;
-    }
-
-    public String getDeliveryAddress() {
-        return deliveryAddress;
-    }
-
-    public void setDeliveryAddress(String deliveryAddress) {
-        this.deliveryAddress = deliveryAddress;
     }
 
     public String getComment() {
@@ -70,5 +65,21 @@ public class TransactionEntity extends BaseEntity{
 
     public void setTotal(Long total) {
         this.total = total;
+    }
+
+    public Double getDistance() {
+        return distance;
+    }
+
+    public void setDistance(Double distance) {
+        this.distance = distance;
+    }
+
+    public Long getDeliveryAddressId() {
+        return deliveryAddressId;
+    }
+
+    public void setDeliveryAddressId(Long deliveryAddressId) {
+        this.deliveryAddressId = deliveryAddressId;
     }
 }

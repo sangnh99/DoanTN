@@ -139,13 +139,12 @@ public class FoodServiceImpl {
             domain.setIsFavourite(0);
         }
         domain.setNote(cartNote);
-        List<Long> listRatingIds = foodRatingRepository.getListRatingIdsFromFoodId(foodId);
+        List<RatingEntity> listRatingIds = ratingRepository.findAllByFoodId(foodId);
         List<CommentDomain> listComments = new ArrayList<>();
         domain.setNumberOfVote("Chưa có lượt đánh giá");
         if (!CollectionUtils.isEmpty(listRatingIds)){
             domain.setNumberOfVote(StringUtils.convertObjectToString(listRatingIds.size()));
-            listComments = listRatingIds.stream().map(ratingId -> {
-                RatingEntity ratingEntity = ratingRepository.getById(ratingId);
+            listComments = listRatingIds.stream().map(ratingEntity -> {
                 CommentDomain commentDomain = new CommentDomain();
                 UserAppEntity userAppEntity = userAppRepository.getById(ratingEntity.getUserAppId());
                 commentDomain.setId(StringUtils.convertObjectToString(ratingEntity.getId()));
@@ -297,7 +296,7 @@ public class FoodServiceImpl {
         }
         Double userLatitude = deliveryAddressEntity.getLatitude();
         Double userLongitude = deliveryAddressEntity.getLongitude();
-        List<StoreEntity> listStore = storeRepository.findAll();
+        List<StoreEntity> listStore = storeRepository.findAll().stream().limit(10).collect(Collectors.toList());
 
         Double distance;
         List<StoreDomain> listResult = new ArrayList<>();
@@ -315,5 +314,30 @@ public class FoodServiceImpl {
 
         listResult.sort((t1, t2) -> t1.getDistance().compareTo(t2.getDistance()));
         return listResult;
+    }
+
+    public String addNewRatingForFood(String food, AddRatingDomain domain) {
+        String success = "";
+        Long foodId = StringUtils.convertStringToLongOrNull(food);
+        Long userAppId = StringUtils.convertStringToLongOrNull(domain.getUserAppId());
+        Long rating = StringUtils.convertStringToLongOrNull(domain.getRating());
+
+        if (foodId == null || userAppId == null){
+            throw new CustomException(Error.PARAMETER_INVALID.getMessage()
+                    , Error.PARAMETER_INVALID.getCode(), HttpStatus.BAD_REQUEST);
+        }
+
+        RatingEntity ratingEntity = new RatingEntity();
+        ratingEntity.setUserAppId(userAppId);
+        ratingEntity.setFoodId(foodId);
+        ratingEntity.setRating(rating);
+        ratingEntity.setComment(domain.getComment());
+        ratingEntity.setDislikeNumber(0l);
+        ratingEntity.setLikeNumber(0l);
+
+        ratingRepository.save(ratingEntity);
+
+        success = "success";
+        return success;
     }
 }
