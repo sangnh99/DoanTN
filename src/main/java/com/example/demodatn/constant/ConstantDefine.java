@@ -47,6 +47,9 @@ public class ConstantDefine {
     public static final String FONT_AT_BANNER = "graphicFont.otf";
     public static final Integer NOTIFY_TITLE_LIMIT = 256;
     public static final Integer NOTIFY_CONTENT_LIMIT = 500;
+    public static final String USD = "USD";
+    public static final Long DISTANCE_ONE_KM_PRICE = 7000l;
+    public static final Double USD_CURRENCY = 23000.0;
 
     public static List<String> getTypeSortList(){
         return Arrays.asList(SORT_ASC, SORT_DESC);

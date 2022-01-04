@@ -107,6 +107,7 @@ public class UserController {
     public ResponseEntity<ResponseDataAPI> geUserCurrentCart(@RequestParam("id") String idStr){
         return ResponseEntity.ok(ResponseDataAPI.builder().data(userAppService.getUserCurrentCart(idStr)).build());
     }
+
     @PostMapping("/cart/add")
     public ResponseEntity<ResponseDataAPI> addToCart(@RequestBody AddToCartDomain domain){
         Long userAppId = StringUtils.convertStringToLongOrNull(domain.getUserAppId());
@@ -129,17 +130,61 @@ public class UserController {
             }
             cartRepository.save(cartEntity);
         }
-        List<CartEntity> cartEntityList = cartRepository.findAllByUserAppId(userAppId);
-        long totalPrice = 0l;
-        if (!CollectionUtils.isEmpty(cartEntityList)){
-            totalPrice = cartEntityList.stream().reduce(0l, (a, b) -> a + b.getPrice()*b.getAmount(), Long::sum);
+//        List<CartEntity> cartEntityList = cartRepository.findAllByUserAppId(userAppId);
+//        long totalPrice = 0l;
+//        if (!CollectionUtils.isEmpty(cartEntityList)){
+//            totalPrice = cartEntityList.stream().reduce(0l, (a, b) -> a + b.getPrice()*b.getAmount(), Long::sum);
+//        }
+        return ResponseEntity.ok(ResponseDataAPI.builder().build());
+    }
+
+    @PostMapping("/cart/add-with-note")
+    public ResponseEntity<ResponseDataAPI> addToCartWithNote(@RequestBody AddToCartDomain domain){
+        Long userAppId = StringUtils.convertStringToLongOrNull(domain.getUserAppId());
+        Long foodId = StringUtils.convertObjectToLongOrNull(domain.getFoodId());
+        FoodEntity foodEntity = foodRepository.getById(foodId);
+        CartEntity cartEntity = cartRepository.findByUserAppIdAndFoodId(userAppId, foodId);
+        Integer number = StringUtils.convertStringToIntegerOrNull(domain.getAmount());
+        if (cartEntity == null){
+            CartEntity newCart = new CartEntity();
+            newCart.setUserAppId(userAppId);
+            newCart.setFoodId(foodId);
+            newCart.setAmount(number);
+            newCart.setPrice(foodEntity.getPrice());
+            newCart.setNote(domain.getNote());
+            cartRepository.save(newCart);
+        } else {
+            cartEntity.setAmount(number + cartEntity.getAmount());
+            cartEntity.setPrice(foodEntity.getPrice());
+            cartEntity.setNote(domain.getNote());
+            if (cartEntity.getAmount().equals(0)){
+                cartEntity.setIsDeleted(1);
+            }
+            cartRepository.save(cartEntity);
         }
-        return ResponseEntity.ok(ResponseDataAPI.builder().data(totalPrice).build());
+//        List<CartEntity> cartEntityList = cartRepository.findAllByUserAppId(userAppId);
+//        long totalPrice = 0l;
+//        if (!CollectionUtils.isEmpty(cartEntityList)){
+//            totalPrice = cartEntityList.stream().reduce(0l, (a, b) -> a + b.getPrice()*b.getAmount(), Long::sum);
+//        }
+        return ResponseEntity.ok(ResponseDataAPI.builder().data(userAppService.getUserCurrentCart(domain.getUserAppId())).build());
     }
 
     @PostMapping("/cart/delete-and-add")
     public ResponseEntity<ResponseDataAPI> deleteAndAddToCart(@RequestBody AddToCartDomain domain){
         userAppService.deleteAndAddToCart(domain);
-        return ResponseEntity.ok(ResponseDataAPI.builder().build());
+        return ResponseEntity.ok(ResponseDataAPI.builder().data(userAppService.getUserCurrentCart(domain.getUserAppId())).build());
+    }
+
+    @GetMapping("/transaction")
+    public ResponseEntity<ResponseDataAPI> getUserTransaction(@RequestParam("user_app_id") String userApp){
+        ResponseDataAPI response = new ResponseDataAPI();
+        response.setData(userAppService.getUserTransaction(userApp));
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/payment/direct")
+    public ResponseEntity<ResponseDataAPI> paymentDirect(@RequestBody DirectPaymentDomain domain){
+        return ResponseEntity.ok(ResponseDataAPI.builder().data(userAppService.paymentDirect(domain)).build());
     }
 }

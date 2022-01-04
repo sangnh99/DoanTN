@@ -5,22 +5,26 @@ import org.hibernate.annotations.Where;
 import javax.persistence.*;
 
 @Entity
-@Table(name = "CART")
+@Table(name = "TRANSACTION_ITEM")
 @Where(clause = "is_deleted = 0")
-public class CartEntity extends BaseEntity{
+public class TransactionItemEntity extends BaseEntity{
     @Id
     @Column(name = "ID")
-    @SequenceGenerator(name = "CART_SEQ", sequenceName = "CART_SEQ", allocationSize = 1)
-    @GeneratedValue(strategy = GenerationType.AUTO, generator = "CART_SEQ")
+    @SequenceGenerator(name = "TRANSACTION_ITEM_SEQ", sequenceName = "TRANSACTION_ITEM_SEQ", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "TRANSACTION_ITEM_SEQ")
     private Long id;
-    @Column(name = "USER_APP_ID")
-    private Long userAppId;
+    @Column(name = "TRANSACTION_ID")
+    private Long transactionId;
     @Column(name = "FOOD_ID")
     private Long foodId;
     @Column(name = "AMOUNT")
     private Integer amount;
     @Column(name = "PRICE")
     private Long price;
+    @Column(name = "DISCOUNT_PERCENT")
+    private Integer discountPercent;
+    @Column(name = "ORIGINAL_PRICE")
+    private Long originalPrice;
     @Column(name = "NOTE")
     private String note;
 
@@ -32,12 +36,12 @@ public class CartEntity extends BaseEntity{
         this.id = id;
     }
 
-    public Long getUserAppId() {
-        return userAppId;
+    public Long getTransactionId() {
+        return transactionId;
     }
 
-    public void setUserAppId(Long userAppId) {
-        this.userAppId = userAppId;
+    public void setTransactionId(Long transactionId) {
+        this.transactionId = transactionId;
     }
 
     public Long getFoodId() {
@@ -62,6 +66,22 @@ public class CartEntity extends BaseEntity{
 
     public void setPrice(Long price) {
         this.price = price;
+    }
+
+    public Integer getDiscountPercent() {
+        return discountPercent;
+    }
+
+    public void setDiscountPercent(Integer discountPercent) {
+        this.discountPercent = discountPercent;
+    }
+
+    public Long getOriginalPrice() {
+        return originalPrice;
+    }
+
+    public void setOriginalPrice(Long originalPrice) {
+        this.originalPrice = originalPrice;
     }
 
     public String getNote() {

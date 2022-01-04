@@ -17,6 +17,11 @@ public class FoodWithCommentDomain {
     private String price;
     private String numberOfVote;
     private List<CommentDomain> listComments;
+    private Integer isFavourite;
+    private Integer discountPercent;
+    private Long originalPrice;
+    private Double distance;
+    private String note;
 
     public String getFoodId() {
         return foodId;
@@ -96,5 +101,45 @@ public class FoodWithCommentDomain {
 
     public void setNumberOfVote(String numberOfVote) {
         this.numberOfVote = numberOfVote;
+    }
+
+    public Integer getIsFavourite() {
+        return isFavourite;
+    }
+
+    public void setIsFavourite(Integer isFavourite) {
+        this.isFavourite = isFavourite;
+    }
+
+    public Integer getDiscountPercent() {
+        return discountPercent;
+    }
+
+    public void setDiscountPercent(Integer discountPercent) {
+        this.discountPercent = discountPercent;
+    }
+
+    public Long getOriginalPrice() {
+        return originalPrice;
+    }
+
+    public void setOriginalPrice(Long originalPrice) {
+        this.originalPrice = originalPrice;
+    }
+
+    public Double getDistance() {
+        return distance;
+    }
+
+    public void setDistance(Double distance) {
+        this.distance = distance;
+    }
+
+    public String getNote() {
+        return note;
+    }
+
+    public void setNote(String note) {
+        this.note = note;
     }
 }

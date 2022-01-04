@@ -44,13 +44,13 @@ public class ImageController {
                 "api_key", "992726224781494",
                 "api_secret", "Tol4roEhAhgOJ3NaNsnAyWDDrD0",
                 "secure", true));
-
+        String imageUrl = "";
         try (OutputStream os = Files.newOutputStream(filepath)) {
             os.write(file.getBytes());
             Map uploadResult = cloudinary.uploader().upload(new File("imagebbb.jpg"), ObjectUtils.emptyMap());
             System.out.println(uploadResult.get("url"));
             System.out.println(userAppId);
-            String imageUrl = (String) uploadResult.get("url");
+            imageUrl = (String) uploadResult.get("url");
             UserAppEntity userAppEntity = userAppRepository.getById(StringUtils.convertStringToLongOrNull(userAppId));
             if (userAppEntity == null){
                 throw new CustomException("Khong tim thay user", "User not found", HttpStatus.BAD_REQUEST);
@@ -60,6 +60,6 @@ public class ImageController {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return ResponseEntity.ok(ResponseDataAPI.builder().build());
+        return ResponseEntity.ok(ResponseDataAPI.builder().data(imageUrl).build());
     }
 }

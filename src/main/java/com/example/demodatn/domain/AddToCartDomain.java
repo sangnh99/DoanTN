@@ -8,6 +8,7 @@ public class AddToCartDomain {
     private String userAppId;
     private String foodId;
     private String amount;
+    private String note;
 
     public String getUserAppId() {
         return userAppId;
@@ -31,5 +32,13 @@ public class AddToCartDomain {
 
     public void setAmount(String amount) {
         this.amount = amount;
+    }
+
+    public String getNote() {
+        return note;
+    }
+
+    public void setNote(String note) {
+        this.note = note;
     }
 }

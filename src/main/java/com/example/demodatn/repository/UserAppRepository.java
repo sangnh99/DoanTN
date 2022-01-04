@@ -21,4 +21,6 @@ public interface UserAppRepository extends JpaRepository<UserAppEntity, Long> {
 
     @Query(value = "select u from UserAppEntity u where u.email = ?1 and u.isDeleted = 1")
     UserAppEntity findUserByEmailToVerify(String email);
+
+    UserAppEntity findByUsernameAndIsLocked(String username, Integer isLocked);
 }

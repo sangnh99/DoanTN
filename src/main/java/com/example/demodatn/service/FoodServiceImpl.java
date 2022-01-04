@@ -1,13 +1,12 @@
 package com.example.demodatn.service;
 
-import com.example.demodatn.constant.ColumnSortFood;
-import com.example.demodatn.constant.ConstantDefine;
+import com.example.demodatn.constant.*;
 import com.example.demodatn.constant.Error;
-import com.example.demodatn.constant.TypeSearch;
 import com.example.demodatn.domain.*;
 import com.example.demodatn.entity.*;
 import com.example.demodatn.exception.CustomException;
 import com.example.demodatn.repository.*;
+import com.example.demodatn.util.CalculateDistanceUtils;
 import com.example.demodatn.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -18,10 +17,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -45,7 +41,26 @@ public class FoodServiceImpl {
     @Autowired
     private SubFoodTypeRepository subFoodTypeRepository;
 
-    public List<FoodDomain> getListFoodByFoodType(String foodTypeStr, BasicRequest request){
+    @Autowired
+    private CartRepository cartRepository;
+
+    @Autowired
+    private FavouriteRepository favouriteRepository;
+
+    @Autowired
+    private CalculateDistanceUtils calculateDistanceUtils;
+
+    @Autowired
+    private DeliveryAddressRepository deliveryAddressRepository;
+
+    public List<FoodDomain> getListFoodByFoodType(String userApp, String foodTypeStr, BasicRequest request){
+        Long userAppId = StringUtils.convertStringToLongOrNull(userApp);
+        if (userAppId == null){
+            throw new CustomException(Error.PARAMETER_INVALID.getMessage()
+                    , Error.PARAMETER_INVALID.getCode(), HttpStatus.BAD_REQUEST);
+        }
+        UserAppEntity userAppEntity = userAppRepository.findById(userAppId).orElse(null);
+        Map<Long, Double> distanceMap = calculateDistanceUtils.getDistanceOfAllStores(userAppEntity);
         Long foodType = StringUtils.convertObjectToLongOrNull(foodTypeStr);
         if (foodType == null){
             throw new CustomException(Error.PARAMETER_INVALID.getMessage()
@@ -82,15 +97,19 @@ public class FoodServiceImpl {
                     domain.setSummaryRating(StringUtils.convertObjectToString(t.getSummaryRating()));
                     domain.setAvatar(t.getAvatar());
                     domain.setPrice(StringUtils.convertObjectToString(t.getPrice()));
+                    domain.setDiscountPercent(t.getDiscountPercent());
+                    domain.setOriginalPrice(t.getOriginalPrice());
+                    domain.setDistance(distanceMap.get(t.getStoreId()));
                     return domain;
                 }
         ).collect(Collectors.toList());
         return responseList;
     }
 
-    public FoodWithCommentDomain getFoodDetail(String food) {
+    public FoodWithCommentDomain getFoodDetail(String food, String userApp) {
+        Long userAppId = StringUtils.convertStringToLongOrNull(userApp);
         Long foodId = StringUtils.convertObjectToLongOrNull(food);
-        if (foodId == null){
+        if (foodId == null || userAppId == null){
             throw new CustomException(Error.PARAMETER_INVALID.getMessage()
                     , Error.PARAMETER_INVALID.getCode(), HttpStatus.BAD_REQUEST);
         }
@@ -99,6 +118,8 @@ public class FoodServiceImpl {
             throw new CustomException(Error.PARAMETER_INVALID.getMessage()
                     , Error.PARAMETER_INVALID.getCode(), HttpStatus.BAD_REQUEST);
         }
+        CartEntity cartEntity = cartRepository.findByUserAppIdAndFoodId(userAppId, foodId);
+        String cartNote = cartEntity == null ? "" : cartEntity.getNote();
         FoodWithCommentDomain domain = new FoodWithCommentDomain();
         domain.setFoodId(StringUtils.convertObjectToString(t.getId()));
         domain.setFoodName(t.getName());
@@ -108,13 +129,22 @@ public class FoodServiceImpl {
         domain.setSummaryRating(t.getSummaryRating() == null ? "0" : StringUtils.convertObjectToString(t.getSummaryRating()));
         domain.setAvatar(t.getAvatar());
         domain.setPrice(StringUtils.convertObjectToString(t.getPrice()));
-        List<Long> listRatingIds = foodRatingRepository.getListRatingIdsFromFoodId(foodId);
+        domain.setDiscountPercent(t.getDiscountPercent());
+        domain.setOriginalPrice(t.getOriginalPrice());
+        domain.setDistance(calculateDistanceUtils.getDistanceOfOnlyOneStore(userAppId, t.getStoreId()));
+        FavouriteEntity favouriteEntity = favouriteRepository.findByUserAppIdAndItemIdAndType(userAppId, foodId, FavouriteType.FOOD.getValue());
+        if (favouriteEntity != null){
+            domain.setIsFavourite(1);
+        } else {
+            domain.setIsFavourite(0);
+        }
+        domain.setNote(cartNote);
+        List<RatingEntity> listRatingIds = ratingRepository.findAllByFoodId(foodId);
         List<CommentDomain> listComments = new ArrayList<>();
         domain.setNumberOfVote("Chưa có lượt đánh giá");
         if (!CollectionUtils.isEmpty(listRatingIds)){
             domain.setNumberOfVote(StringUtils.convertObjectToString(listRatingIds.size()));
-            listComments = listRatingIds.stream().map(ratingId -> {
-                RatingEntity ratingEntity = ratingRepository.getById(ratingId);
+            listComments = listRatingIds.stream().map(ratingEntity -> {
                 CommentDomain commentDomain = new CommentDomain();
                 UserAppEntity userAppEntity = userAppRepository.getById(ratingEntity.getUserAppId());
                 commentDomain.setId(StringUtils.convertObjectToString(ratingEntity.getId()));
@@ -151,9 +181,10 @@ public class FoodServiceImpl {
         ratingRepository.save(ratingEntity);
     }
 
-    public List<StoreDetailByFoodIdDomain> getAllFoodOfStoreByFoodId(String food) {
+    public List<StoreDetailByFoodIdDomain> getAllFoodOfStoreByFoodId(String food, String userApp) {
+        Long userAppId = StringUtils.convertStringToLongOrNull(userApp);
         Long foodId = StringUtils.convertObjectToLongOrNull(food);
-        if (foodId == null) {
+        if (foodId == null || userAppId == null) {
             throw new CustomException(Error.PARAMETER_INVALID.getMessage()
                     , Error.PARAMETER_INVALID.getCode(), HttpStatus.BAD_REQUEST);
         }
@@ -162,6 +193,7 @@ public class FoodServiceImpl {
             throw new CustomException(Error.PARAMETER_INVALID.getMessage()
                     , Error.PARAMETER_INVALID.getCode(), HttpStatus.BAD_REQUEST);
         }
+        Double distance = calculateDistanceUtils.getDistanceOfOnlyOneStore(userAppId, foodEntity.getStoreId());
         StoreEntity storeEntity = storeRepository.getById(foodEntity.getStoreId());
         List<SubFoodTypeEntity> listSubfoodType = subFoodTypeRepository.findAllByStoreId(storeEntity.getId()).stream().sorted((t1, t2) -> t1.getId().compareTo(t2.getId())).collect(Collectors.toList());
         List<FoodEntity> listFood = foodRepository.findAllByStoreId(storeEntity.getId());
@@ -183,6 +215,9 @@ public class FoodServiceImpl {
                         foodDomain.setSummaryRating(StringUtils.convertObjectToString(t.getSummaryRating()));
                         foodDomain.setAvatar(t.getAvatar());
                         foodDomain.setPrice(StringUtils.convertObjectToString(t.getPrice()));
+                        foodDomain.setDiscountPercent(t.getDiscountPercent());
+                        foodDomain.setOriginalPrice(t.getOriginalPrice());
+                        foodDomain.setDistance(distance);
                         return foodDomain;
                     })
                     .collect(Collectors.toList()));
@@ -191,7 +226,9 @@ public class FoodServiceImpl {
         return listResult;
     }
 
-    public List<Object> getAllBySearchValue(String valueSearchOriginal, String typeSearchStr, Integer offset){
+    public List<Object> getAllBySearchValue(String valueSearchOriginal, String typeSearchStr, Integer offset, String userApp){
+        Long userAppId = StringUtils.convertStringToLongOrNull(userApp);
+        UserAppEntity userAppEntity = userAppRepository.findById(userAppId).orElse(null);
         Integer typeSearch = StringUtils.convertStringToIntegerOrNull(typeSearchStr);
         if (typeSearch == null){
             throw new CustomException(Error.PARAMETER_INVALID.getMessage()
@@ -202,7 +239,7 @@ public class FoodServiceImpl {
 
         Pageable pageable = PageRequest.of(offset, 12, sort);
 
-
+        Map<Long, Double> distanceMap = calculateDistanceUtils.getDistanceOfAllStores(userAppEntity);
         String valueSearch = valueSearchOriginal.trim().toLowerCase(Locale.ROOT);
         if (TypeSearch.STORE.getValue().equals(typeSearch)){
             Page<StoreEntity> listStore = storeRepository.findStoreBySearchValue(valueSearch, pageable);
@@ -214,6 +251,7 @@ public class FoodServiceImpl {
                     storeDomain.setAvatar(t.getAvatar());
                     storeDomain.setAddress(t.getAddress());
                     storeDomain.setPhone(t.getPhone());
+                    storeDomain.setDistance(calculateDistanceUtils.getDistanceOfOnlyOneStore(userAppId, t.getId()));
                     return storeDomain;
                 }).collect(Collectors.toList());
             }
@@ -230,10 +268,76 @@ public class FoodServiceImpl {
                     domain.setSummaryRating(StringUtils.convertObjectToString(t.getSummaryRating()));
                     domain.setAvatar(t.getAvatar());
                     domain.setPrice(StringUtils.convertObjectToString(t.getPrice()));
+                    domain.setDiscountPercent(t.getDiscountPercent());
+                    domain.setOriginalPrice(t.getOriginalPrice());
+                    domain.setDistance(distanceMap.get(t.getStoreId()));
                     return domain;
                 }).collect(Collectors.toList());
             }
         }
         return new ArrayList<>();
+    }
+
+    public List<StoreDomain> geListNearFood(String userApp) {
+        Long userAppId = StringUtils.convertStringToLongOrNull(userApp);
+        if (userAppId == null) {
+            throw new CustomException(Error.PARAMETER_INVALID.getMessage()
+                    , Error.PARAMETER_INVALID.getCode(), HttpStatus.BAD_REQUEST);
+        }
+        UserAppEntity userAppEntity = userAppRepository.findById(userAppId).orElse(null);
+        if (userAppEntity == null){
+            throw new CustomException(Error.PARAMETER_INVALID.getMessage()
+                    , Error.PARAMETER_INVALID.getCode(), HttpStatus.BAD_REQUEST);
+        }
+        DeliveryAddressEntity deliveryAddressEntity = deliveryAddressRepository.findById(userAppEntity.getActiveAddressId()).orElse(null);
+        if (deliveryAddressEntity == null){
+            throw new CustomException(Error.PARAMETER_INVALID.getMessage()
+                    , Error.PARAMETER_INVALID.getCode(), HttpStatus.BAD_REQUEST);
+        }
+        Double userLatitude = deliveryAddressEntity.getLatitude();
+        Double userLongitude = deliveryAddressEntity.getLongitude();
+        List<StoreEntity> listStore = storeRepository.findAll().stream().limit(10).collect(Collectors.toList());
+
+        Double distance;
+        List<StoreDomain> listResult = new ArrayList<>();
+        for (StoreEntity storeEntity : listStore){
+            StoreDomain domain = new StoreDomain();
+            domain.setId(StringUtils.convertObjectToString(storeEntity.getId()));
+            domain.setName(storeEntity.getName());
+            domain.setAddress(storeEntity.getAddress());
+            domain.setPhone(storeEntity.getPhone());
+            domain.setAvatar(storeEntity.getAvatar());
+            distance = calculateDistanceUtils.getDistance(userLatitude, userLongitude, storeEntity.getLatitude(), storeEntity.getLongitude());
+            domain.setDistance(distance);
+            listResult.add(domain);
+        }
+
+        listResult.sort((t1, t2) -> t1.getDistance().compareTo(t2.getDistance()));
+        return listResult;
+    }
+
+    public String addNewRatingForFood(String food, AddRatingDomain domain) {
+        String success = "";
+        Long foodId = StringUtils.convertStringToLongOrNull(food);
+        Long userAppId = StringUtils.convertStringToLongOrNull(domain.getUserAppId());
+        Long rating = StringUtils.convertStringToLongOrNull(domain.getRating());
+
+        if (foodId == null || userAppId == null){
+            throw new CustomException(Error.PARAMETER_INVALID.getMessage()
+                    , Error.PARAMETER_INVALID.getCode(), HttpStatus.BAD_REQUEST);
+        }
+
+        RatingEntity ratingEntity = new RatingEntity();
+        ratingEntity.setUserAppId(userAppId);
+        ratingEntity.setFoodId(foodId);
+        ratingEntity.setRating(rating);
+        ratingEntity.setComment(domain.getComment());
+        ratingEntity.setDislikeNumber(0l);
+        ratingEntity.setLikeNumber(0l);
+
+        ratingRepository.save(ratingEntity);
+
+        success = "success";
+        return success;
     }
 }

@@ -1,6 +1,7 @@
 package com.example.demodatn.service;
 
 import com.example.demodatn.constant.Error;
+import com.example.demodatn.constant.FavouriteType;
 import com.example.demodatn.domain.CommentDomain;
 import com.example.demodatn.domain.FoodDomain;
 import com.example.demodatn.domain.StoreDetailByFoodIdDomain;
@@ -8,6 +9,7 @@ import com.example.demodatn.domain.StoreDetailDomain;
 import com.example.demodatn.entity.*;
 import com.example.demodatn.exception.CustomException;
 import com.example.demodatn.repository.*;
+import com.example.demodatn.util.CalculateDistanceUtils;
 import com.example.demodatn.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -39,12 +41,21 @@ public class StoreServiceImpl {
     @Autowired
     private UserAppRepository userAppRepository;
 
-    public StoreDetailDomain getStoreDetail(String store){
+    @Autowired
+    private FavouriteRepository favouriteRepository;
+
+    @Autowired
+    private CalculateDistanceUtils calculateDistanceUtils;
+
+    public StoreDetailDomain getStoreDetail(String store, String userApp){
+        Long userAppId = StringUtils.convertStringToLongOrNull(userApp);
         Long storeId = StringUtils.convertObjectToLongOrNull(store);
-        if (storeId == null){
+        if (storeId == null || userAppId == null){
             throw new CustomException(Error.PARAMETER_INVALID.getMessage()
                     , Error.PARAMETER_INVALID.getCode(), HttpStatus.BAD_REQUEST);
         }
+
+        Double distance = calculateDistanceUtils.getDistanceOfOnlyOneStore(userAppId, storeId);
         StoreEntity storeEntity = storeRepository.getById(storeId);
         if (storeEntity == null){
             throw new CustomException(Error.PARAMETER_INVALID.getMessage()
@@ -56,14 +67,19 @@ public class StoreServiceImpl {
         storeDetailDomain.setAddress(storeEntity.getAddress());
         storeDetailDomain.setPhone(storeEntity.getPhone());
         storeDetailDomain.setAvatar(storeEntity.getAvatar());
-        List<Long> listRatingIds = foodRatingRepository.getListRatingIdsFromStore(storeId);
+        FavouriteEntity favouriteEntity = favouriteRepository.findByUserAppIdAndItemIdAndType(userAppId, storeId, FavouriteType.STORE.getValue());
+        if (favouriteEntity == null) {
+            storeDetailDomain.setIsFavourite(0);
+        } else {
+            storeDetailDomain.setIsFavourite(1);
+        }
+        List<RatingEntity> listRatingIds = ratingRepository.getListRatingOfStore(storeId);
         List<CommentDomain> listComments = new ArrayList<>();
         if (!CollectionUtils.isEmpty(listRatingIds)){
-            listComments = listRatingIds.stream().map(ratingId -> {
-                RatingEntity ratingEntity = ratingRepository.getById(ratingId);
+            listComments = listRatingIds.stream().map(ratingEntity -> {
                 CommentDomain commentDomain = new CommentDomain();
                 UserAppEntity userAppEntity = userAppRepository.getById(ratingEntity.getUserAppId());
-                FoodEntity foodEntity = foodRatingRepository.findFoodEntityByRatingId(ratingId);
+                FoodEntity foodEntity = foodRepository.findById(ratingEntity.getFoodId()).orElse(null);
                 commentDomain.setId(StringUtils.convertObjectToString(ratingEntity.getId()));
                 commentDomain.setFoodId(StringUtils.convertObjectToString(foodEntity.getId()));
                 commentDomain.setFoodName(foodEntity.getName());
@@ -99,6 +115,7 @@ public class StoreServiceImpl {
                         foodDomain.setSummaryRating(StringUtils.convertObjectToString(t.getSummaryRating()));
                         foodDomain.setAvatar(t.getAvatar());
                         foodDomain.setPrice(StringUtils.convertObjectToString(t.getPrice()));
+                        foodDomain.setDistance(distance);
                         return foodDomain;
                     })
                     .collect(Collectors.toList()));

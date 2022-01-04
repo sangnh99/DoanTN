@@ -23,6 +23,8 @@ public class RatingEntity extends BaseEntity{
     private Long likeNumber;
     @Column(name = "DISLIKE_NUMBER")
     private Long dislikeNumber;
+    @Column(name = "FOOD_ID")
+    private Long foodId;
 
     public Long getId() {
         return id;
@@ -70,5 +72,13 @@ public class RatingEntity extends BaseEntity{
 
     public void setDislikeNumber(Long dislikeNumber) {
         this.dislikeNumber = dislikeNumber;
+    }
+
+    public Long getFoodId() {
+        return foodId;
+    }
+
+    public void setFoodId(Long foodId) {
+        this.foodId = foodId;
     }
 }
