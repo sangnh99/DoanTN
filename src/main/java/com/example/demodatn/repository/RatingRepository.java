@@ -13,4 +13,6 @@ public interface RatingRepository extends JpaRepository<RatingEntity, Long> {
     @Query(value = "select r from RatingEntity r inner join FoodEntity f on f.id = r.foodId inner join " +
             "StoreEntity s on s.id = f.storeId where s.id = ?1")
     List<RatingEntity> getListRatingOfStore(Long storeId);
+
+    List<RatingEntity> findAllByUserAppId(Long userAppId);
 }
