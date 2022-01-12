@@ -11,7 +11,6 @@ import com.example.demodatn.exception.CustomException;
 import com.example.demodatn.repository.*;
 import com.example.demodatn.util.CalculateDistanceUtils;
 import com.example.demodatn.util.StringUtils;
-import org.checkerframework.checker.units.qual.A;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -22,8 +21,6 @@ import com.opencsv.CSVWriter;
 
 import java.io.File;
 import java.io.FileWriter;
-import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
