@@ -24,7 +24,7 @@ public class TestController {
     @GetMapping("/recommend-system")
     private ResponseEntity<ResponseDataAPI> testRecommendSystem() {
 //        itemBasedFilteringService.buildDifferencesMatrixAndPredict();
-        return ResponseEntity.ok(ResponseDataAPI.builder().data(itemBasedFilteringService.handleFileCsv("1")
+        return ResponseEntity.ok(ResponseDataAPI.builder().data(null
         ).build());
     }
 

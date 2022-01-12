@@ -16,6 +16,22 @@ public class StoreDetailDomain {
     private List<CommentDomain> listComments;
     private Integer isFavourite;
     private Double distance;
+    private Double summaryRating;
+    private Double latitude;
+    private Double longitude;
+    private Integer numberOfRating;
+    private List<FoodDomain> listRecommendFood;
+    private List<FoodDomain> listMustTryFood;
+    private String openTime;
+    private String priceRange;
+
+    public Integer getNumberOfRating() {
+        return numberOfRating;
+    }
+
+    public void setNumberOfRating(Integer numberOfRating) {
+        this.numberOfRating = numberOfRating;
+    }
 
     public String getId() {
         return id;
@@ -87,5 +103,61 @@ public class StoreDetailDomain {
 
     public void setDistance(Double distance) {
         this.distance = distance;
+    }
+
+    public Double getSummaryRating() {
+        return summaryRating;
+    }
+
+    public void setSummaryRating(Double summaryRating) {
+        this.summaryRating = summaryRating;
+    }
+
+    public Double getLatitude() {
+        return latitude;
+    }
+
+    public void setLatitude(Double latitude) {
+        this.latitude = latitude;
+    }
+
+    public Double getLongitude() {
+        return longitude;
+    }
+
+    public void setLongitude(Double longitude) {
+        this.longitude = longitude;
+    }
+
+    public List<FoodDomain> getListRecommendFood() {
+        return listRecommendFood;
+    }
+
+    public void setListRecommendFood(List<FoodDomain> listRecommendFood) {
+        this.listRecommendFood = listRecommendFood;
+    }
+
+    public List<FoodDomain> getListMustTryFood() {
+        return listMustTryFood;
+    }
+
+    public void setListMustTryFood(List<FoodDomain> listMustTryFood) {
+        this.listMustTryFood = listMustTryFood;
+    }
+
+    public String getOpenTime() {
+        return openTime;
+    }
+
+    public void setOpenTime(String openTime) {
+        this.openTime = openTime;
+    }
+
+    public String getPriceRange() {
+        return priceRange;
+    }
+
+    public void setPriceRange(String priceRange) {
+        this.priceRange = priceRange;
     }
 }

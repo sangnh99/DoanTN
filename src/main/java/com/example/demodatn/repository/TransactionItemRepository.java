@@ -10,4 +10,5 @@ import java.util.List;
 @Repository
 public interface TransactionItemRepository extends JpaRepository<TransactionItemEntity, Long> {
     List<TransactionItemEntity> findAllByTransactionId(Long transactionId);
+    List<TransactionItemEntity> findAllByFoodId(Long foodId);
 }

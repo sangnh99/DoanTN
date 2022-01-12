@@ -119,18 +119,20 @@ public class FoodServiceImpl {
                     , Error.PARAMETER_INVALID.getCode(), HttpStatus.BAD_REQUEST);
         }
         CartEntity cartEntity = cartRepository.findByUserAppIdAndFoodId(userAppId, foodId);
+        StoreEntity storeEntity = storeRepository.findById(t.getStoreId()).orElse(null);
         String cartNote = cartEntity == null ? "" : cartEntity.getNote();
         FoodWithCommentDomain domain = new FoodWithCommentDomain();
         domain.setFoodId(StringUtils.convertObjectToString(t.getId()));
         domain.setFoodName(t.getName());
         domain.setFoodTypeId(StringUtils.convertObjectToString(t.getFoodTypeId()));
         domain.setStoreId(StringUtils.convertObjectToString(t.getStoreId()));
-        domain.setStoreName(storeRepository.findById(t.getStoreId()).orElse(null).getName());
+        domain.setStoreName(storeEntity.getName());
         domain.setSummaryRating(t.getSummaryRating() == null ? "0" : StringUtils.convertObjectToString(t.getSummaryRating()));
         domain.setAvatar(t.getAvatar());
         domain.setPrice(StringUtils.convertObjectToString(t.getPrice()));
         domain.setDiscountPercent(t.getDiscountPercent());
         domain.setOriginalPrice(t.getOriginalPrice());
+        domain.setStoreAddress(storeEntity.getAddress());
         domain.setDistance(calculateDistanceUtils.getDistanceOfOnlyOneStore(userAppId, t.getStoreId()));
         FavouriteEntity favouriteEntity = favouriteRepository.findByUserAppIdAndItemIdAndType(userAppId, foodId, FavouriteType.FOOD.getValue());
         if (favouriteEntity != null){
@@ -141,7 +143,7 @@ public class FoodServiceImpl {
         domain.setNote(cartNote);
         List<RatingEntity> listRatingIds = ratingRepository.findAllByFoodId(foodId);
         List<CommentDomain> listComments = new ArrayList<>();
-        domain.setNumberOfVote("Chưa có lượt đánh giá");
+        domain.setNumberOfVote(StringUtils.convertObjectToString(listRatingIds.size()));
         if (!CollectionUtils.isEmpty(listRatingIds)){
             domain.setNumberOfVote(StringUtils.convertObjectToString(listRatingIds.size()));
             listComments = listRatingIds.stream().map(ratingEntity -> {
@@ -330,7 +332,7 @@ public class FoodServiceImpl {
         RatingEntity ratingEntity = new RatingEntity();
         ratingEntity.setUserAppId(userAppId);
         ratingEntity.setFoodId(foodId);
-        ratingEntity.setRating(rating);
+        ratingEntity.setRating(rating.equals(0L) ? null : rating);
         ratingEntity.setComment(domain.getComment());
         ratingEntity.setDislikeNumber(0l);
         ratingEntity.setLikeNumber(0l);

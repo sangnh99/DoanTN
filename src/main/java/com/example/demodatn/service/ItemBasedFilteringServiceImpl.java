@@ -76,7 +76,38 @@ public class ItemBasedFilteringServiceImpl {
         return data;
     }
 
-    @Scheduled(fixedRate = 6000000)
+    @Scheduled(fixedRate = 172800000)
+    public void setSummaryRating(){
+        List<FoodEntity> listFood = foodRepository.findAll();
+        List<FoodEntity> listResultFood = new ArrayList<>();
+        for (FoodEntity foodEntity : listFood) {
+            List<RatingEntity> listRatingOfFood = ratingRepository.findAllByFoodId(foodEntity.getId());
+            if (!CollectionUtils.isEmpty(listRatingOfFood)) {
+                Double totalRating = listRatingOfFood.stream().map(t -> t.getRating()).reduce(0l, (t1, t2) -> t1 + t2).doubleValue()/ listRatingOfFood.size();
+                foodEntity.setSummaryRating(Math.round(totalRating*1000.0)/1000.0);
+                listResultFood.add(foodEntity);
+            }
+        }
+        foodRepository.saveAll(listResultFood);
+        List<StoreEntity> listStore = storeRepository.findAll();
+        List<StoreEntity> listResultStore = new ArrayList<>();
+        for (StoreEntity store : listStore){
+            List<FoodEntity> listFoodOfStore = foodRepository.findAllByStoreId(store.getId());
+            List<FoodEntity> listFoodHaveRating = listFoodOfStore.stream().filter(t -> t.getSummaryRating() != null).collect(Collectors.toList());
+            if (!CollectionUtils.isEmpty(listFoodHaveRating)){
+                Double sumRating = listFoodHaveRating.stream().map(t -> t.getSummaryRating()).reduce(0.0, (t1, t2) -> t1 + t2)/listFoodHaveRating.size();
+                store.setSummaryRating(Math.round(sumRating*1000.0)/1000.0);
+                listResultStore.add(store);
+                System.out.println("Store : " + store.getId());
+                listFoodHaveRating.forEach(t -> System.out.println("Food : " + t.getId() + ", rating : " + t.getSummaryRating()));
+            }
+
+        }
+        storeRepository.saveAll(listResultStore);
+    }
+
+
+    @Scheduled(fixedRate = 172800000)
     public void buildDifferencesMatrixAndPredict() {
         Map<Long, HashMap<Long, Double>> data = initializeData();
         Map<Long, Map<Long, Double>> diff = new HashMap<>();
