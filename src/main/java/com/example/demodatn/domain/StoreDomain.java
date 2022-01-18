@@ -11,6 +11,8 @@ public class StoreDomain {
     private String phone;
     private String avatar;
     private Double distance;
+    private Double summaryRating;
+    private Integer numberOfRating;
 
     public String getId() {
         return id;
@@ -58,5 +60,21 @@ public class StoreDomain {
 
     public void setDistance(Double distance) {
         this.distance = distance;
+    }
+
+    public Double getSummaryRating() {
+        return summaryRating;
+    }
+
+    public void setSummaryRating(Double summaryRating) {
+        this.summaryRating = summaryRating;
+    }
+
+    public Integer getNumberOfRating() {
+        return numberOfRating;
+    }
+
+    public void setNumberOfRating(Integer numberOfRating) {
+        this.numberOfRating = numberOfRating;
     }
 }

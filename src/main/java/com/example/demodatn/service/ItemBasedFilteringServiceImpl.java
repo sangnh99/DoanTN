@@ -73,7 +73,7 @@ public class ItemBasedFilteringServiceImpl {
         return data;
     }
 
-    @Scheduled(fixedRate = 172800000)
+//    @Scheduled(fixedRate = 172800000)
     public void setSummaryRating(){
         List<FoodEntity> listFood = foodRepository.findAll();
         List<FoodEntity> listResultFood = new ArrayList<>();
@@ -101,10 +101,12 @@ public class ItemBasedFilteringServiceImpl {
 
         }
         storeRepository.saveAll(listResultStore);
+
+
     }
 
 
-    @Scheduled(fixedRate = 172800000)
+//    @Scheduled(fixedRate = 172800000)
     public void buildDifferencesMatrixAndPredict() {
         Map<Long, HashMap<Long, Double>> data = initializeData();
         Map<Long, Map<Long, Double>> diff = new HashMap<>();
@@ -271,8 +273,19 @@ public class ItemBasedFilteringServiceImpl {
                                                             .distinct()
                                                             .collect(Collectors.toList());
                     List<Long> listWillShowFoodId = listFoodId.stream().filter(t -> !listRatingFoodOfUser.contains(t))
-                                                            .limit(15)
+                                                            .limit(16)
                                                             .collect(Collectors.toList());
+
+                    //fill missing number
+                    if (listWillShowFoodId.size() < 16){
+                        while (listWillShowFoodId.size() < 16){
+                            for (Long foodId : listFoodId){
+                                if (!listWillShowFoodId.contains(foodId)){
+                                    listWillShowFoodId.add(foodId);
+                                }
+                            }
+                        }
+                    }
 
                     if (!CollectionUtils.isEmpty(listWillShowFoodId)){
                         for (Long foodId : listWillShowFoodId){

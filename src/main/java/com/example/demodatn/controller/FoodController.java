@@ -81,7 +81,8 @@ public class FoodController {
         } else {
             offset = offset - 1;
         }
-        return ResponseEntity.ok(ResponseDataAPI.builder().data(foodService.getAllBySearchValue(valueSearch, typeSearch, offset, userApp)).message(typeSearch).build());
+        ResponseDataAPI responseDataAPI = foodService.getAllBySearchValue(valueSearch, typeSearch, offset, userApp);
+        return ResponseEntity.ok(ResponseDataAPI.builder().data(responseDataAPI.getData()).totalRows(responseDataAPI.getTotalRows()).message(typeSearch).build());
     }
 
     @GetMapping("/get-list-near-food")
@@ -92,6 +93,16 @@ public class FoodController {
     @PostMapping("/{food_id}/add-rating")
     public ResponseEntity<ResponseDataAPI> addNewRatingForFood(@PathVariable("food_id") String food, @RequestBody AddRatingDomain domain){
         return ResponseEntity.ok(ResponseDataAPI.builder().data(foodService.addNewRatingForFood(food, domain)).build());
+    }
+
+    @GetMapping("/get-list-recommend-food")
+    public ResponseEntity<ResponseDataAPI> getListRecommendFood(@RequestParam("user_app_id") String userApp){
+        return ResponseEntity.ok(ResponseDataAPI.builder().data(foodService.geListRecommendFood(userApp)).build());
+    }
+
+    @GetMapping("/get-list-sale-food")
+    public ResponseEntity<ResponseDataAPI> getListSaleFood(@RequestParam("user_app_id") String userApp){
+        return ResponseEntity.ok(ResponseDataAPI.builder().data(foodService.geListSaleFood(userApp)).build());
     }
 
 }
