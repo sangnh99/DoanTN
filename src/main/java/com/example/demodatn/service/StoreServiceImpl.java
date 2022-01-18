@@ -10,14 +10,14 @@ import com.example.demodatn.entity.*;
 import com.example.demodatn.exception.CustomException;
 import com.example.demodatn.repository.*;
 import com.example.demodatn.util.CalculateDistanceUtils;
+import com.example.demodatn.util.FormatRatingUtils;
 import com.example.demodatn.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -47,6 +47,12 @@ public class StoreServiceImpl {
     @Autowired
     private CalculateDistanceUtils calculateDistanceUtils;
 
+    @Autowired
+    private FormatRatingUtils formatRatingUtils;
+
+    @Autowired
+    private TransactionItemRepository transactionItemRepository;
+
     public StoreDetailDomain getStoreDetail(String store, String userApp){
         Long userAppId = StringUtils.convertStringToLongOrNull(userApp);
         Long storeId = StringUtils.convertObjectToLongOrNull(store);
@@ -67,6 +73,16 @@ public class StoreServiceImpl {
         storeDetailDomain.setAddress(storeEntity.getAddress());
         storeDetailDomain.setPhone(storeEntity.getPhone());
         storeDetailDomain.setAvatar(storeEntity.getAvatar());
+        storeDetailDomain.setLatitude(storeEntity.getLatitude());
+        storeDetailDomain.setLongitude(storeEntity.getLongitude());
+        storeDetailDomain.setOpenTime(storeEntity.getOpenTime());
+        storeDetailDomain.setPriceRange(storeEntity.getPriceRange());
+
+        if (storeEntity.getSummaryRating() != null){
+            storeDetailDomain.setSummaryRating(formatRatingUtils.formatRatingOneNumber(storeEntity.getSummaryRating()));
+        } else {
+            storeDetailDomain.setSummaryRating(0.0);
+        }
         FavouriteEntity favouriteEntity = favouriteRepository.findByUserAppIdAndItemIdAndType(userAppId, storeId, FavouriteType.STORE.getValue());
         if (favouriteEntity == null) {
             storeDetailDomain.setIsFavourite(0);
@@ -74,6 +90,7 @@ public class StoreServiceImpl {
             storeDetailDomain.setIsFavourite(1);
         }
         List<RatingEntity> listRatingIds = ratingRepository.getListRatingOfStore(storeId);
+        storeDetailDomain.setNumberOfRating(listRatingIds.size());
         List<CommentDomain> listComments = new ArrayList<>();
         if (!CollectionUtils.isEmpty(listRatingIds)){
             listComments = listRatingIds.stream().map(ratingEntity -> {
@@ -95,8 +112,75 @@ public class StoreServiceImpl {
             storeDetailDomain.setListComments(new ArrayList<>());
         }
 
+        Map<Integer, String> topMap = new HashMap<>();
+        topMap.put(1, "http://res.cloudinary.com/djifhw3lo/image/upload/v1641893032/jvhdomyqo6wqdzcdh3uk.png");
+        topMap.put(2, "http://res.cloudinary.com/djifhw3lo/image/upload/v1641893165/lbzzhufhwypefpg9abfu.png");
+        topMap.put(3, "http://res.cloudinary.com/djifhw3lo/image/upload/v1641893206/ljcqvbefreejrs87yar1.png");
+
         List<SubFoodTypeEntity> listSubfoodType = subFoodTypeRepository.findAllByStoreId(storeEntity.getId()).stream().sorted((t1, t2) -> t1.getId().compareTo(t2.getId())).collect(Collectors.toList());
         List<FoodEntity> listFood = foodRepository.findAllByStoreId(storeEntity.getId());
+
+        //get list must try food
+        List<FoodEntity> listMustTryFood = listFood.stream().sorted(Comparator.comparing(FoodEntity::getSummaryRating, Comparator.nullsLast(Comparator.reverseOrder())))
+                                        .limit(4)
+                                        .collect(Collectors.toList());
+        List<FoodDomain> listMustTryDomain = new ArrayList<>();
+
+        for (FoodEntity t : listMustTryFood){
+            FoodDomain foodDomain = new FoodDomain();
+            foodDomain.setId(StringUtils.convertObjectToString(t.getId()));
+            foodDomain.setName(t.getName());
+            foodDomain.setFoodTypeId(StringUtils.convertObjectToString(t.getFoodTypeId()));
+            foodDomain.setStoreId(StringUtils.convertObjectToString(t.getStoreId()));
+            foodDomain.setStoreName(storeEntity.getName());
+            if (t.getSummaryRating() != null){
+                foodDomain.setSummaryRating(StringUtils.convertObjectToString(formatRatingUtils.formatRatingOneNumber(t.getSummaryRating())));
+            } else {
+                foodDomain.setSummaryRating("0");
+            }
+            foodDomain.setAvatar(t.getAvatar());
+            foodDomain.setDiscountPercent(t.getDiscountPercent());
+            foodDomain.setOriginalPrice(t.getOriginalPrice());
+            foodDomain.setPrice(StringUtils.convertObjectToString(t.getPrice()));
+            foodDomain.setDistance(distance);
+            listMustTryDomain.add(foodDomain);
+        }
+        storeDetailDomain.setListMustTryFood(listMustTryDomain);
+
+        //get list recommend food
+        Map<FoodEntity, Integer> recommendFoodMap = new HashMap<>();
+        List<FoodDomain> listRecommendFood = new ArrayList<>();
+        for (FoodEntity foodEntity : listFood){
+            List<TransactionItemEntity> listItem = transactionItemRepository.findAllByFoodId(foodEntity.getId());
+            if (!CollectionUtils.isEmpty(listItem)){
+                recommendFoodMap.put(foodEntity, listItem.size());
+            }
+        }
+        if (CollectionUtils.isEmpty(recommendFoodMap)){
+            storeDetailDomain.setListRecommendFood(new ArrayList<>());
+        } else {
+            List<FoodEntity> list3FoodRecommend = recommendFoodMap.entrySet()
+                    .stream().sorted(Map.Entry.<FoodEntity, Integer>comparingByValue().reversed())
+                    .limit(3)
+                    .map(t -> t.getKey())
+                    .collect(Collectors.toList());
+            int count = 1;
+            for (FoodEntity t : list3FoodRecommend){
+                FoodDomain foodDomain = new FoodDomain();
+                foodDomain.setId(StringUtils.convertObjectToString(t.getId()));
+                foodDomain.setName(t.getName());
+                foodDomain.setFoodTypeId(StringUtils.convertObjectToString(t.getFoodTypeId()));
+                foodDomain.setSummaryRating(StringUtils.convertObjectToString(t.getSummaryRating()));
+                foodDomain.setAvatar(t.getAvatar());
+                foodDomain.setDiscountPercent(t.getDiscountPercent());
+                foodDomain.setOriginalPrice(t.getOriginalPrice());
+                foodDomain.setPrice(StringUtils.convertObjectToString(t.getPrice()));
+                foodDomain.setTopImageUrl(topMap.get(count++));
+                listRecommendFood.add(foodDomain);
+            }
+            storeDetailDomain.setListRecommendFood(listRecommendFood);
+        }
+
         List<StoreDetailByFoodIdDomain> listResult = new ArrayList<>();
         int count = 1;
         for (SubFoodTypeEntity subType : listSubfoodType){
@@ -111,9 +195,11 @@ public class StoreServiceImpl {
                         foodDomain.setName(t.getName());
                         foodDomain.setFoodTypeId(StringUtils.convertObjectToString(t.getFoodTypeId()));
                         foodDomain.setStoreId(StringUtils.convertObjectToString(t.getStoreId()));
-                        foodDomain.setStoreName(storeRepository.findById(t.getStoreId()).orElse(null).getName());
+                        foodDomain.setStoreName(storeEntity.getName());
                         foodDomain.setSummaryRating(StringUtils.convertObjectToString(t.getSummaryRating()));
                         foodDomain.setAvatar(t.getAvatar());
+                        foodDomain.setDiscountPercent(t.getDiscountPercent());
+                        foodDomain.setOriginalPrice(t.getOriginalPrice());
                         foodDomain.setPrice(StringUtils.convertObjectToString(t.getPrice()));
                         foodDomain.setDistance(distance);
                         return foodDomain;

@@ -22,6 +22,7 @@ public class FoodWithCommentDomain {
     private Long originalPrice;
     private Double distance;
     private String note;
+    private String storeAddress;
 
     public String getFoodId() {
         return foodId;
@@ -141,5 +142,13 @@ public class FoodWithCommentDomain {
 
     public void setNote(String note) {
         this.note = note;
+    }
+
+    public String getStoreAddress() {
+        return storeAddress;
+    }
+
+    public void setStoreAddress(String storeAddress) {
+        this.storeAddress = storeAddress;
     }
 }

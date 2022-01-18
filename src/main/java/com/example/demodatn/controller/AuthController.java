@@ -9,6 +9,7 @@ import com.example.demodatn.service.*;
 import com.example.demodatn.util.SiteUrlUtils;
 import net.bytebuddy.utility.RandomString;
 
+import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -63,6 +64,7 @@ public class AuthController {
     @PostMapping("/forgot_password")
     public ResponseEntity<ResponseDataAPI> processForgotPassword(HttpServletRequest request, @RequestBody EmailDomain domain) {
         String email = domain.getEmail();
+//        String token = RandomStringUtils.randomAlphabetic(30);
         String token = RandomString.make(30);
 
         try {

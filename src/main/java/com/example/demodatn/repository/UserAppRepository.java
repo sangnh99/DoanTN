@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -23,4 +24,7 @@ public interface UserAppRepository extends JpaRepository<UserAppEntity, Long> {
     UserAppEntity findUserByEmailToVerify(String email);
 
     UserAppEntity findByUsernameAndIsLocked(String username, Integer isLocked);
+
+    @Query(value = "select u from UserAppEntity u where u.isDeleted <> 1 and u.isLocked <> 1")
+    List<UserAppEntity> getListUserActive();
 }

@@ -25,6 +25,12 @@ public class StoreEntity extends BaseEntity{
     private Double latitude;
     @Column(name = "LONGITUDE")
     private Double longitude;
+    @Column(name = "SUMMARY_RATING")
+    private Double summaryRating;
+    @Column(name="OPEN_TIME")
+    private String openTime;
+    @Column(name="PRICE_RANGE")
+    private String priceRange;
 
     public Long getId() {
         return id;
@@ -80,5 +86,29 @@ public class StoreEntity extends BaseEntity{
 
     public void setLongitude(Double longitude) {
         this.longitude = longitude;
+    }
+
+    public Double getSummaryRating() {
+        return summaryRating;
+    }
+
+    public void setSummaryRating(Double summaryRating) {
+        this.summaryRating = summaryRating;
+    }
+
+    public String getOpenTime() {
+        return openTime;
+    }
+
+    public void setOpenTime(String openTime) {
+        this.openTime = openTime;
+    }
+
+    public String getPriceRange() {
+        return priceRange;
+    }
+
+    public void setPriceRange(String priceRange) {
+        this.priceRange = priceRange;
     }
 }

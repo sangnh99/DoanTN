@@ -17,7 +17,7 @@ public class FoodDomain {
     private Integer discountPercent;
     private Long originalPrice;
     private Double distance;
-
+    private String topImageUrl;
 
     public String getId() {
         return id;
@@ -113,5 +113,13 @@ public class FoodDomain {
 
     public void setDistance(Double distance) {
         this.distance = distance;
+    }
+
+    public String getTopImageUrl() {
+        return topImageUrl;
+    }
+
+    public void setTopImageUrl(String topImageUrl) {
+        this.topImageUrl = topImageUrl;
     }
 }
