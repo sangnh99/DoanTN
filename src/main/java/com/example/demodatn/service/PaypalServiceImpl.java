@@ -62,6 +62,7 @@ public class PaypalServiceImpl {
         transactionEntity.setUserAppId(userAppId);
         transactionEntity.setPaymentMethod(PaymentMethod.PAYPAL.getName());
         transactionEntity.setDistance(distance);
+        transactionEntity.setStoreId(storeEntity.getId());
         transactionEntity.setDeliveryAddressId(userAppRepository.findById(userAppId).orElse(null).getActiveAddressId());
 
         transactionEntity = transactionRepository.save(transactionEntity);

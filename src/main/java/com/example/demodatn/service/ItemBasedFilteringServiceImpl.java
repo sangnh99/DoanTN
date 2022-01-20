@@ -51,6 +51,12 @@ public class ItemBasedFilteringServiceImpl {
     @Autowired
     private MetadataRepository metadataRepository;
 
+    @Autowired
+    private TransactionRepository transactionRepository;
+
+    @Autowired
+    private TransactionItemRepository transactionItemRepository;
+
 
     public Map<Long, HashMap<Long, Double>> initializeData() {// user - item
         Map<Long, HashMap<Long, Double>> data = new HashMap<>();
@@ -105,6 +111,22 @@ public class ItemBasedFilteringServiceImpl {
 
     }
 
+//    @Scheduled(fixedRate = 172800000)
+    public void setStoreIdForTransaction(){
+        List<TransactionEntity> listTransaction = transactionRepository.findAll();
+        List<TransactionEntity> lisResult = new ArrayList<>();
+        for (TransactionEntity entity : listTransaction){
+            System.out.println("Transaction :" + entity.getId());
+            TransactionItemEntity transactionItemEntity = transactionItemRepository.findAllByTransactionId(entity.getId()).stream().limit(1).collect(Collectors.toList()).get(0);
+            FoodEntity foodEntity = foodRepository.findById(transactionItemEntity.getFoodId()).orElse(null);
+            if (foodEntity == null){
+                throw new CustomException("Food bi sai", "Food bi sai", HttpStatus.BAD_REQUEST);
+            }
+            entity.setStoreId(foodEntity.getStoreId());
+            lisResult.add(entity);
+        }
+        transactionRepository.saveAll(lisResult);
+    }
 
 //    @Scheduled(fixedRate = 172800000)
     public void buildDifferencesMatrixAndPredict() {

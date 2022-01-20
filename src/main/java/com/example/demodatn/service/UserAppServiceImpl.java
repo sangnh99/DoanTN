@@ -1,9 +1,7 @@
 package com.example.demodatn.service;
 
+import com.example.demodatn.constant.*;
 import com.example.demodatn.constant.Error;
-import com.example.demodatn.constant.IsLocked;
-import com.example.demodatn.constant.PaymentMethod;
-import com.example.demodatn.constant.RoleConstant;
 import com.example.demodatn.domain.*;
 import com.example.demodatn.entity.*;
 import com.example.demodatn.exception.CustomException;
@@ -12,9 +10,14 @@ import com.example.demodatn.util.CalculateDistanceUtils;
 import com.example.demodatn.util.DateTimeUtils;
 import com.example.demodatn.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -24,6 +27,7 @@ import javax.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 @Service
@@ -306,6 +310,7 @@ public class UserAppServiceImpl implements UserAppService {
         transactionEntity.setUserAppId(userAppId);
         transactionEntity.setPaymentMethod(PaymentMethod.DIRECT.getName());
         transactionEntity.setDistance(distance);
+        transactionEntity.setStoreId(storeEntity.getId());
         transactionEntity.setDeliveryAddressId(userAppRepository.findById(userAppId).orElse(null).getActiveAddressId());
 
         transactionEntity = transactionRepository.save(transactionEntity);
@@ -340,5 +345,89 @@ public class UserAppServiceImpl implements UserAppService {
         cartRepository.saveAll(listCartOfUser);
 
         return "success";
+    }
+
+    public ResponseDataAPI getAllUsersAdmin(String valueSearch, Integer offset) {
+        ResponseDataAPI responseDataAPI = new ResponseDataAPI();
+
+        Sort sort = Sort.by(Sort.Order.desc("id"));
+
+        Pageable pageable = PageRequest.of(offset, 8, sort);
+
+        String searchValue = valueSearch.trim().toLowerCase(Locale.ROOT);
+
+        Page<UserAppEntity> userAppPage = userAppRepository.getListUserBySearchValue(searchValue, pageable);
+
+        if (userAppPage.getTotalElements() == 0l){
+            return responseDataAPI;
+        }
+
+        List<UserInfoDomain> listResult = userAppPage.stream().map(userAppEntity -> {
+            UserInfoDomain domain = new UserInfoDomain();
+            domain.setId(StringUtils.convertObjectToString(userAppEntity.getId()));
+            domain.setUsername(userAppEntity.getUsername());
+            domain.setFullName(userAppEntity.getFullName());
+            domain.setPhone(userAppEntity.getPhone());
+            domain.setAvatar(userAppEntity.getAvatar());
+            domain.setAddress(userAppEntity.getAddress());
+            domain.setEmail(userAppEntity.getEmail());
+            domain.setIsLocked(userAppEntity.getIsLocked());
+            domain.setCreatedDate(DateTimeUtils.convertDateToStringOrEmpty(userAppEntity.getCreatedDate(), DateTimeUtils.YYYYMMDDhhmm));
+
+            return domain;
+        }).collect(Collectors.toList());
+        responseDataAPI.setData(listResult);
+        responseDataAPI.setTotalRows(userAppPage.getTotalElements());
+        return responseDataAPI;
+    }
+
+    public void lockUser(UserAppIdDomain domain) {
+        Long userAppId = StringUtils.convertStringToLongOrNull(domain.getUserAppId());
+
+        UserAppEntity userAppEntity = userAppRepository.findById(userAppId).orElse(null);
+
+        if (userAppEntity == null || userAppEntity.getIsLocked().equals(1)){
+            throw new CustomException("User ID bi sai", "User ID bi sai", HttpStatus.BAD_REQUEST);
+        }
+
+        userAppEntity.setIsLocked(1);
+
+        userAppRepository.save(userAppEntity);
+    }
+
+    public void unlockUser(UserAppIdDomain domain) {
+        Long userAppId = StringUtils.convertStringToLongOrNull(domain.getUserAppId());
+
+        UserAppEntity userAppEntity = userAppRepository.findById(userAppId).orElse(null);
+
+        if (userAppEntity == null || userAppEntity.getIsLocked().equals(0)){
+            throw new CustomException("User ID bi sai", "User ID bi sai", HttpStatus.BAD_REQUEST);
+        }
+
+        userAppEntity.setIsLocked(0);
+
+        userAppRepository.save(userAppEntity);
+    }
+
+    public void changePasswordAdmin(ChangePasswordAdminDomain domain) {
+        Long adminId = StringUtils.convertObjectToLongOrNull(domain.getId());
+        if (adminId == null){
+            throw new CustomException("Admin ID bi sai", "Admin ID bi sai", HttpStatus.BAD_REQUEST);
+        }
+        UserAppEntity adminEntity = userAppRepository.findById(adminId).orElse(null);
+
+        if (adminEntity == null){
+            throw new CustomException("Admin ID bi sai", "Admin ID bi sai", HttpStatus.BAD_REQUEST);
+        }
+
+        if (!BCrypt.checkpw(domain.getOldPassword(), adminEntity.getPassword())){
+            throw new CustomException("Mat khau cu bi sai", "Mat khau cu bi sai", HttpStatus.BAD_REQUEST);
+        }
+
+        BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+        String encodedPassword = passwordEncoder.encode(domain.getNewPassword());
+
+        adminEntity.setPassword(encodedPassword);
+        userAppRepository.save(adminEntity);
     }
 }

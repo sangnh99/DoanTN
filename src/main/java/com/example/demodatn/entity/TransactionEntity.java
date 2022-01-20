@@ -26,6 +26,8 @@ public class TransactionEntity extends BaseEntity{
     private Double distance;
     @Column(name = "DELIVERY_ADDRESS_ID")
     private Long deliveryAddressId;
+    @Column(name = "STORE_ID")
+    private Long storeId;
 
     public Long getId() {
         return id;
@@ -81,5 +83,13 @@ public class TransactionEntity extends BaseEntity{
 
     public void setDeliveryAddressId(Long deliveryAddressId) {
         this.deliveryAddressId = deliveryAddressId;
+    }
+
+    public Long getStoreId() {
+        return storeId;
+    }
+
+    public void setStoreId(Long storeId) {
+        this.storeId = storeId;
     }
 }

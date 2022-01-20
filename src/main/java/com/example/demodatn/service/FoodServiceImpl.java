@@ -7,8 +7,10 @@ import com.example.demodatn.entity.*;
 import com.example.demodatn.exception.CustomException;
 import com.example.demodatn.repository.*;
 import com.example.demodatn.util.CalculateDistanceUtils;
+import com.example.demodatn.util.DateTimeUtils;
 import com.example.demodatn.util.FormatRatingUtils;
 import com.example.demodatn.util.StringUtils;
+import org.checkerframework.checker.units.qual.A;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -60,6 +62,12 @@ public class FoodServiceImpl {
 
     @Autowired
     private FormatRatingUtils formatRatingUtils;
+
+    @Autowired
+    private TransactionItemRepository transactionItemRepository;
+
+    @Autowired
+    private TransactionRepository transactionRepository;
 
     public List<FoodDomain> getListFoodByFoodType(String userApp, String foodTypeStr, BasicRequest request){
         Long userAppId = StringUtils.convertStringToLongOrNull(userApp);
@@ -546,5 +554,86 @@ public class FoodServiceImpl {
                 }
         ).collect(Collectors.toList());
         return  listFood;
+    }
+
+    public ResponseDataAPI getAllUserTransaction(BasicRequest request) {
+        ResponseDataAPI responseDataAPI = new ResponseDataAPI();
+        List<String> listColumnSort = ColumnSortTransactionAdmin.getListColumnSortTransactionAdmin();
+        if (!listColumnSort.contains(request.getColumnSort())){
+            request.setColumnSort("id");
+        }
+        List<String> listTypeSort = ConstantDefine.getTypeSortList();
+        if (!listTypeSort.contains(request.getTypeSort())){
+            request.setTypeSort("DESC");
+        }
+
+        Sort sort = null;
+
+        if (ConstantDefine.SORT_ASC.equals(request.getTypeSort())){
+            sort = Sort.by(Sort.Order.asc(request.getColumnSort()));
+        } else {
+            sort = Sort.by(Sort.Order.desc(request.getColumnSort()));
+        }
+        Pageable pageable = PageRequest.of(request.getOffset(), request.getLimit(), sort);
+
+        String searchValue = request.getValueSearch().trim().toLowerCase(Locale.ROOT);
+
+        Page<TransactionEntity> listTransaction = transactionRepository.getAllTransactionOfUser(searchValue, pageable);
+
+
+        if (listTransaction.getTotalElements() == 0l){
+            return responseDataAPI;
+        }
+
+        responseDataAPI.setTotalRows(listTransaction.getTotalElements());
+
+        List<TransactionDomain> listResult = new ArrayList<>();
+
+        for (TransactionEntity transaction : listTransaction){
+            TransactionDomain domain = new TransactionDomain();
+            domain.setId(StringUtils.convertObjectToString(transaction.getId()));
+            domain.setComment(transaction.getComment());
+            domain.setDistance(transaction.getDistance());
+            domain.setPaymentMethod(transaction.getPaymentMethod());
+            domain.setTotal(transaction.getTotal());
+            domain.setUserAppId(StringUtils.convertObjectToString(transaction.getUserAppId()));
+            UserAppEntity userAppEntity = userAppRepository.findById(transaction.getUserAppId()).orElse(null);
+            if (userAppEntity == null){
+                throw new CustomException("User ko ton tai", "User ko ton tai", HttpStatus.BAD_REQUEST);
+            }
+            domain.setUserAppName(userAppEntity.getUsername());
+            Date date = transaction.getCreatedDate();
+            String createDate = DateTimeUtils.convertDateToStringOrEmpty(date, DateTimeUtils.YYYYMMDDhhmm);
+            domain.setCreateDate(createDate);
+            List<TransactionItemEntity> listItem = transactionItemRepository.findAllByTransactionId(transaction.getId());
+
+            StoreEntity storeEntity = storeRepository.findById(transaction.getStoreId()).orElse(null);
+            if (storeEntity == null) {
+                throw new CustomException("Store ko ton tai", "Store ko ton tai", HttpStatus.BAD_REQUEST);
+            }
+            domain.setStoreId(storeEntity.getId().toString());
+            domain.setStoreName(storeEntity.getName());
+            domain.setAddress(storeEntity.getAddress());
+            domain.setStoreAvatar(storeEntity.getAvatar());
+            List<TransactionItemDomain> listResponseItem = new ArrayList<>();
+            for (TransactionItemEntity transactionItemEntity : listItem){
+                TransactionItemDomain itemDomain = new TransactionItemDomain();
+                itemDomain.setTransactionId(transaction.getId().toString());
+                itemDomain.setFoodId(transactionItemEntity.getFoodId().toString());
+                FoodEntity foodEntity = foodRepository.findById(transactionItemEntity.getFoodId()).orElse(null);
+                itemDomain.setAmount(transactionItemEntity.getAmount());
+                itemDomain.setNote(transactionItemEntity.getNote());
+                itemDomain.setPrice(transactionItemEntity.getPrice());
+                itemDomain.setDiscountPercent(transactionItemEntity.getDiscountPercent());
+                itemDomain.setOriginalPrice(transactionItemEntity.getOriginalPrice());
+                itemDomain.setFoodAvatar(foodEntity.getAvatar());
+                itemDomain.setFoodName(foodEntity.getName());
+                listResponseItem.add(itemDomain);
+            }
+            domain.setListItem(listResponseItem);
+            listResult.add(domain);
+        }
+        responseDataAPI.setData(listResult);
+        return responseDataAPI;
     }
 }

@@ -8,6 +8,8 @@ import java.util.List;
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public class TransactionDomain {
     private String id;
+    private String userAppId;
+    private String userAppName;
     private String comment;
     private Long total;
     private Double distance;
@@ -105,5 +107,21 @@ public class TransactionDomain {
 
     public void setStoreAvatar(String storeAvatar) {
         this.storeAvatar = storeAvatar;
+    }
+
+    public String getUserAppId() {
+        return userAppId;
+    }
+
+    public void setUserAppId(String userAppId) {
+        this.userAppId = userAppId;
+    }
+
+    public String getUserAppName() {
+        return userAppName;
+    }
+
+    public void setUserAppName(String userAppName) {
+        this.userAppName = userAppName;
     }
 }
