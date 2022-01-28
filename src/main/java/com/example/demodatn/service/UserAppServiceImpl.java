@@ -260,7 +260,7 @@ public class UserAppServiceImpl implements UserAppService {
             domain.setCreateDate(createDate);
             List<TransactionItemEntity> listItem = transactionItemRepository.findAllByTransactionId(transaction.getId());
 
-            StoreEntity storeEntity = storeRepository.findById(foodRepository.getById(listItem.get(0).getFoodId()).getStoreId()).orElse(null);
+            StoreEntity storeEntity = storeRepository.findById(transaction.getStoreId()).orElse(null);
             domain.setStoreId(storeEntity.getId().toString());
             domain.setStoreName(storeEntity.getName());
             domain.setAddress(storeEntity.getAddress());

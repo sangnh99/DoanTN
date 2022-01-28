@@ -79,7 +79,7 @@ public class ItemBasedFilteringServiceImpl {
         return data;
     }
 
-    @Scheduled(fixedRate = 372800000)
+//    @Scheduled(fixedRate = 372800000)
     public void setSummaryRating(){
         List<FoodEntity> listFood = foodRepository.findAll();
         List<FoodEntity> listResultFood = new ArrayList<>();
