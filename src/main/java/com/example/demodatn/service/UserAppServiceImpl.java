@@ -240,7 +240,7 @@ public class UserAppServiceImpl implements UserAppService {
         if (userAppEntity == null){
             throw new CustomException("Id cua user bi sai", "wrong user id", HttpStatus.BAD_REQUEST);
         }
-        List<TransactionEntity> listTransaction = transactionRepository.findAllByUserAppIdOrderByCreatedDateDesc(userAppId);
+        List<TransactionEntity> listTransaction = transactionRepository.findAllByUserAppIdOrderByIdDesc(userAppId);
         listTransaction = listTransaction.stream().limit(10).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(listTransaction)){
             return new ArrayList<>();

@@ -128,7 +128,7 @@ public class ItemBasedFilteringServiceImpl {
         transactionRepository.saveAll(lisResult);
     }
 
-//    @Scheduled(fixedRate = 172800000)
+//    @Scheduled(fixedRate = 372800000)
     public void buildDifferencesMatrixAndPredict() {
         Map<Long, HashMap<Long, Double>> data = initializeData();
         Map<Long, Map<Long, Double>> diff = new HashMap<>();

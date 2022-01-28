@@ -407,13 +407,15 @@ public class FoodServiceImpl {
                 if (userAppId.equals(userId)){
                     List<String> listFoodStr = new ArrayList<>(Arrays.asList(listItem));
                     listFoodStr.remove(0);
-                    List<Long> listFoodId = listFoodStr.stream().map(t -> StringUtils.convertStringToLongOrNull(t)).collect(Collectors.toList());
+                    List<Long> listFoodId = listFoodStr.stream()
+                            .map(t -> StringUtils.convertStringToLongOrNull(t))
+                            .filter(t -> foodRepository.findById(t).orElse(null) != null)
+                            .collect(Collectors.toList());
                     List<Long> listRatingFoodOfUser = ratingRepository.findAllByUserAppId(userAppId) // list nay ko co lien quan toi food bi xoa
                             .stream().map(t -> t.getFoodId())
                             .distinct()
                             .collect(Collectors.toList());
                     List<Long> listWillShowFoodId = listFoodId.stream().filter(t -> !listRatingFoodOfUser.contains(t))
-                            .filter(t -> foodRepository.findById(t).orElse(null) != null)
                             .limit(16)
                             .collect(Collectors.toList());
 
