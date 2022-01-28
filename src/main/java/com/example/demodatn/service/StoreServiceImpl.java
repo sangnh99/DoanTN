@@ -2,10 +2,7 @@ package com.example.demodatn.service;
 
 import com.example.demodatn.constant.Error;
 import com.example.demodatn.constant.FavouriteType;
-import com.example.demodatn.domain.CommentDomain;
-import com.example.demodatn.domain.FoodDomain;
-import com.example.demodatn.domain.StoreDetailByFoodIdDomain;
-import com.example.demodatn.domain.StoreDetailDomain;
+import com.example.demodatn.domain.*;
 import com.example.demodatn.entity.*;
 import com.example.demodatn.exception.CustomException;
 import com.example.demodatn.repository.*;
@@ -13,10 +10,15 @@ import com.example.demodatn.util.CalculateDistanceUtils;
 import com.example.demodatn.util.FormatRatingUtils;
 import com.example.demodatn.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
+import javax.transaction.Transactional;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -52,6 +54,13 @@ public class StoreServiceImpl {
 
     @Autowired
     private TransactionItemRepository transactionItemRepository;
+
+    @Autowired
+    private CartRepository cartRepository;
+
+    @Autowired
+    private TransactionRepository transactionRepository;
+
 
     public StoreDetailDomain getStoreDetail(String store, String userApp){
         Long userAppId = StringUtils.convertStringToLongOrNull(userApp);
@@ -188,6 +197,9 @@ public class StoreServiceImpl {
             domain.setSubFoodTypeId(StringUtils.convertObjectToString(subType.getId()));
             domain.setSubFoodTypeName(subType.getName());
             domain.setKey(StringUtils.convertObjectToString(count ++));
+
+
+
             domain.setListFood(listFood.stream().filter(t -> subType.getId().equals(t.getSubFoodTypeId()))
                     .map(t -> {
                         FoodDomain foodDomain = new FoodDomain();
@@ -205,10 +217,376 @@ public class StoreServiceImpl {
                         return foodDomain;
                     })
                     .collect(Collectors.toList()));
-            listResult.add(domain);
+            if (!CollectionUtils.isEmpty(domain.getListFood())){
+                listResult.add(domain);
+            }
         }
         storeDetailDomain.setListSubFoodType(listResult);
         return storeDetailDomain;
+    }
+
+    public ResponseDataAPI createNewStoreAdmin(CreateNewStoreDomain domain) {
+        ResponseDataAPI responseDataAPI = new ResponseDataAPI();
+        List<String> listStoreName = storeRepository.findAll().stream().map(t -> t.getName()).collect(Collectors.toList());
+        if (listStoreName.contains(domain.getName())){
+            throw new CustomException("Tên của cửa hàng đã bị trùng, vui lòng chọn tên khác !", "Tên của cửa hàng đã bị trùng, vui lòng chọn tên khác !", HttpStatus.BAD_REQUEST);
+        }
+
+        Map<String, Long> listConvertFoodType = new HashMap<>();
+        listConvertFoodType.put("Cơm", 1l);
+        listConvertFoodType.put("Bún/phở", 2l);
+        listConvertFoodType.put("Đồ ăn vặt/ăn nhanh", 3l);
+        listConvertFoodType.put("Đặt sản", 4l);
+        listConvertFoodType.put("Healthy", 5l);
+        listConvertFoodType.put("Đồ uống", 6l);
+
+
+
+        StoreEntity storeEntity = new StoreEntity();
+        storeEntity.setName(domain.getName());
+        storeEntity.setAddress(domain.getAddressSave());
+        storeEntity.setPhone(domain.getPhone());
+        storeEntity.setAvatar(domain.getAvatar());
+        storeEntity.setLatitude(StringUtils.convertStringToDoubleOrNull(domain.getLat()));
+        storeEntity.setLongitude(StringUtils.convertStringToDoubleOrNull(domain.getLng()));
+        storeEntity.setOpenTime(domain.getOpentime());
+        storeEntity.setPriceRange(domain.getPricerange());
+
+        storeEntity = storeRepository.save(storeEntity);
+
+        List<String> listSubFoodTypeName = domain.getListSubFood().stream().distinct().collect(Collectors.toList());
+
+        List<SubFoodTypeEntity> listSubFoodType = new ArrayList<>();
+        for (String subTypeName : listSubFoodTypeName){
+            SubFoodTypeEntity subFoodTypeEntity = new SubFoodTypeEntity();
+            subFoodTypeEntity.setStoreId(storeEntity.getId());
+            subFoodTypeEntity.setName(subTypeName);
+            subFoodTypeEntity.setParentId(null);
+            listSubFoodType.add(subFoodTypeEntity);
+        }
+
+        subFoodTypeRepository.saveAll(listSubFoodType);
+
+        List<FoodEntity> listFood = new ArrayList<>();
+        for (CreateNewFoodDomain createNewFoodDomain : domain.getListNewFood()){
+            FoodEntity foodEntity = new FoodEntity();
+            foodEntity.setName(createNewFoodDomain.getName());
+            foodEntity.setFoodTypeId(listConvertFoodType.get(createNewFoodDomain.getFoodType()));
+            SubFoodTypeEntity subFoodTypeEntity = subFoodTypeRepository.findByStoreIdAndName(storeEntity.getId(), createNewFoodDomain.getSubFoodType());
+            if (subFoodTypeEntity == null){
+                throw new CustomException("Sub food type ko tim thay", "Sub food type ko tim thay", HttpStatus.BAD_REQUEST);
+            }
+            foodEntity.setSubFoodTypeId(subFoodTypeEntity.getId());
+            foodEntity.setOriginalPrice(StringUtils.convertStringToLongOrNull(createNewFoodDomain.getPrice()));
+            foodEntity.setDiscountPercent(StringUtils.convertStringToIntegerOrNull(createNewFoodDomain.getDiscountPercent()));
+
+            if (foodEntity.getDiscountPercent() == null){
+                foodEntity.setDiscountPercent(0);
+            }
+
+            Double priceDouble = Math.ceil( (double) foodEntity.getOriginalPrice() / 100 * (100 - foodEntity.getDiscountPercent()) / 1000);
+            Long price = priceDouble.longValue() * 1000;
+
+            foodEntity.setPrice(price);
+            foodEntity.setAvatar(createNewFoodDomain.getAvatar());
+            foodEntity.setStoreId(storeEntity.getId());
+
+            if (foodEntity.getDiscountPercent().equals(0)){
+                foodEntity.setDiscountPercent(null);
+            }
+
+            listFood.add(foodEntity);
+        }
+
+        foodRepository.saveAll(listFood);
+        return responseDataAPI;
+    }
+
+    public ResponseDataAPI getAllStoreAdmin(String valueSearch, Integer offset) {
+        Sort sort = Sort.by(Sort.Order.desc("id"));
+        Pageable pageable = PageRequest.of(offset, 8, sort);
+
+        String searchValue = valueSearch.trim().toLowerCase(Locale.ROOT);
+
+        Page<StoreEntity> pageAllStore = storeRepository.findStoreBySearchValue(searchValue, pageable);
+
+        List<StoreDomain> listResult = pageAllStore.stream().map(storeEntity -> {
+            StoreDomain domain = new StoreDomain();
+            domain.setId(StringUtils.convertObjectToString(storeEntity.getId()));
+            domain.setAvatar(storeEntity.getAvatar());
+            domain.setPhone(storeEntity.getPhone());
+            domain.setOpenTime(storeEntity.getOpenTime());
+            domain.setSummaryRating(storeEntity.getSummaryRating());
+            domain.setPriceRange(storeEntity.getPriceRange());
+            domain.setAddress(storeEntity.getAddress());
+            domain.setName(storeEntity.getName());
+            //set number of rating
+            domain.setNumberOfRating(null);
+            return domain;
+        }).collect(Collectors.toList());
+
+        ResponseDataAPI responseDataAPI = new ResponseDataAPI();
+        responseDataAPI.setTotalRows(pageAllStore.getTotalElements());
+        responseDataAPI.setData(listResult);
+
+        return responseDataAPI;
+    }
+
+    public ResponseDataAPI getInfoOfStoreAdmin(String storeIdStr) {
+        ResponseDataAPI responseDataAPI = new ResponseDataAPI();
+        Long storeId = StringUtils.convertObjectToLongOrNull(storeIdStr);
+        if (storeId == null){
+            throw new CustomException("store id bi sai", "store id bi sai", HttpStatus.BAD_REQUEST);
+        }
+        StoreEntity storeEntity = storeRepository.findById(storeId).orElse(null);
+        if (storeEntity == null){
+            throw new CustomException("store bi sai", "store bi sai", HttpStatus.BAD_REQUEST);
+        }
+        EditStoreDomain domain = new EditStoreDomain();
+        domain.setId(StringUtils.convertObjectToString(storeEntity.getId()));
+        domain.setName(storeEntity.getName());
+        domain.setPhone(storeEntity.getPhone());
+        domain.setOpentime(storeEntity.getOpenTime());
+        domain.setPricerange(storeEntity.getPriceRange());
+        domain.setAvatar(storeEntity.getAvatar());
+        domain.setLat(StringUtils.convertObjectToString(storeEntity.getLatitude()));
+        domain.setLng(StringUtils.convertObjectToString(storeEntity.getLongitude()));
+        domain.setAddressSave(storeEntity.getAddress());
+
+        List<SubFoodTypeEntity> listSubFood = subFoodTypeRepository.findAllByStoreId(storeId);
+
+        domain.setListSubFood(listSubFood.stream().map(t -> t.getName()).collect(Collectors.toList()));
+
+        responseDataAPI.setData(domain);
+        return responseDataAPI;
+    }
+
+    public ResponseDataAPI getAllFoodOfStoreAdmin(String storeIdStr, Integer offset, String valueSearch) {
+        ResponseDataAPI responseDataAPI = new ResponseDataAPI();
+        Long storeId = StringUtils.convertObjectToLongOrNull(storeIdStr);
+        if (storeId == null){
+            throw new CustomException("store id bi sai", "store id bi sai", HttpStatus.BAD_REQUEST);
+        }
+        StoreEntity storeEntity = storeRepository.findById(storeId).orElse(null);
+        if (storeEntity == null){
+            throw new CustomException("store bi sai", "store bi sai", HttpStatus.BAD_REQUEST);
+        }
+
+        Sort sort = Sort.by(Sort.Order.desc("id"));
+        Pageable pageable = PageRequest.of(offset, 8, sort);
+
+        String searchValue = valueSearch.trim().toLowerCase(Locale.ROOT);
+
+        Map<Long, String> listConvertFoodType = new HashMap<>();
+        listConvertFoodType.put(1l, "Cơm");
+        listConvertFoodType.put(2l, "Bún/phở");
+        listConvertFoodType.put(3l, "Đồ ăn vặt/ăn nhanh");
+        listConvertFoodType.put(4l, "Đặt sản");
+        listConvertFoodType.put(5l, "Healthy");
+        listConvertFoodType.put(6l, "Đồ uống");
+
+        Page<FoodEntity> listFoodOfStore = foodRepository.getAllFoodOfStoreAdmin(storeId, searchValue, pageable);
+        List<EditFoodDomain> listResult = new ArrayList<>();
+        if (listFoodOfStore.getTotalElements() != 0l){
+            listResult = listFoodOfStore.stream().map(foodEntity -> {
+                EditFoodDomain domain = new EditFoodDomain();
+                domain.setId(StringUtils.convertObjectToString(foodEntity.getId()));
+                domain.setName(foodEntity.getName());
+                domain.setFoodType(listConvertFoodType.get(foodEntity.getFoodTypeId()));
+                SubFoodTypeEntity subFoodTypeEntity = subFoodTypeRepository.findById(foodEntity.getSubFoodTypeId()).orElse(null);
+                if (subFoodTypeEntity == null){
+                    throw new CustomException("sub food typpe ko ton tai", "sub food typpe ko ton tai", HttpStatus.BAD_REQUEST);
+                }
+                domain.setSubFoodType(subFoodTypeEntity.getName());
+                domain.setPrice(StringUtils.convertObjectToString(foodEntity.getOriginalPrice()));
+                domain.setDiscountPercent(StringUtils.convertObjectToString(foodEntity.getDiscountPercent()) == null ? "0" : StringUtils.convertObjectToString(foodEntity.getDiscountPercent()));
+                domain.setAvatar(foodEntity.getAvatar());
+                return domain;
+            }).collect(Collectors.toList());
+        }
+
+        responseDataAPI.setData(listResult);
+        responseDataAPI.setTotalRows(listFoodOfStore.getTotalElements());
+        return responseDataAPI;
+    }
+
+    public void editInfoStore(EditStoreDomain domain) {
+        Long storeId = StringUtils.convertObjectToLongOrNull(domain.getId());
+        if (storeId == null){
+            throw new CustomException("Store id bi sai", "Store id bi sai", HttpStatus.BAD_REQUEST);
+        }
+        StoreEntity storeEntity = storeRepository.findById(storeId).orElse(null);
+        if (storeEntity == null){
+            throw new CustomException("Store ko ton tai", "Store ko ton tai", HttpStatus.BAD_REQUEST);
+        }
+        List<String> listStoreName = storeRepository.findAll().stream().filter(t -> !t.getId().equals(storeId)).map(t -> t.getName()).collect(Collectors.toList());
+        if (listStoreName.contains(domain.getName())){
+            throw new CustomException("Tên của cửa hàng đã bị trùng, vui lòng chọn tên khác !", "Tên của cửa hàng đã bị trùng, vui lòng chọn tên khác !", HttpStatus.BAD_REQUEST);
+        }
+
+        storeEntity.setName(domain.getName());
+        storeEntity.setAddress(domain.getAddressSave());
+        storeEntity.setPhone(domain.getPhone());
+        storeEntity.setAvatar(domain.getAvatar());
+        storeEntity.setLatitude(StringUtils.convertStringToDoubleOrNull(domain.getLat()));
+        storeEntity.setLongitude(StringUtils.convertStringToDoubleOrNull(domain.getLng()));
+        storeEntity.setOpenTime(domain.getOpentime());
+        storeEntity.setPriceRange(domain.getPricerange());
+        if (!CollectionUtils.isEmpty(domain.getListSubFood())){
+            List<String> listSubFoodTypeName = domain.getListSubFood().stream().distinct().collect(Collectors.toList());
+
+            List<SubFoodTypeEntity> listSubFoodType = new ArrayList<>();
+            for (String subTypeName : listSubFoodTypeName){
+                SubFoodTypeEntity subFoodTypeEntity = new SubFoodTypeEntity();
+                subFoodTypeEntity.setStoreId(storeEntity.getId());
+                subFoodTypeEntity.setName(subTypeName);
+                subFoodTypeEntity.setParentId(null);
+                listSubFoodType.add(subFoodTypeEntity);
+            }
+
+            subFoodTypeRepository.saveAll(listSubFoodType);
+        }
+
+        storeRepository.save(storeEntity);
+    }
+
+    public ResponseDataAPI createNewFoodEditStoreDomain(CreateNewFoodEditStoreDomain createNewFoodDomain) {
+        Long storeId = StringUtils.convertStringToLongOrNull(createNewFoodDomain.getStoreId());
+        if (storeId == null){
+            throw new CustomException("Store id bi sai", "Store id bi sai", HttpStatus.BAD_REQUEST);
+        }
+        StoreEntity storeEntity = storeRepository.findById(storeId).orElse(null);
+        if (storeEntity == null){
+            throw new CustomException("Store ko ton tai", "Store ko ton tai", HttpStatus.BAD_REQUEST);
+        }
+        List<FoodEntity> listFoodOfStore = foodRepository.findAll();
+        List<String> listFoodNameOfStore = new ArrayList<>();
+        if (!CollectionUtils.isEmpty(listFoodOfStore)){
+            listFoodNameOfStore = listFoodOfStore.stream().map(t -> t.getName()).collect(Collectors.toList());
+        }
+        if (listFoodNameOfStore.contains(createNewFoodDomain.getName())){
+            throw new CustomException("Ten mon an da bi trung", "Ten mon an da bi trung", HttpStatus.BAD_REQUEST);
+        }
+
+        Map<String, Long> listConvertFoodType = new HashMap<>();
+        listConvertFoodType.put("Cơm", 1l);
+        listConvertFoodType.put("Bún/phở", 2l);
+        listConvertFoodType.put("Đồ ăn vặt/ăn nhanh", 3l);
+        listConvertFoodType.put("Đặt sản", 4l);
+        listConvertFoodType.put("Healthy", 5l);
+        listConvertFoodType.put("Đồ uống", 6l);
+
+        FoodEntity foodEntity = new FoodEntity();
+        foodEntity.setName(createNewFoodDomain.getName());
+        foodEntity.setFoodTypeId(listConvertFoodType.get(createNewFoodDomain.getFoodType()));
+        SubFoodTypeEntity subFoodTypeEntity = subFoodTypeRepository.findByStoreIdAndName(storeEntity.getId(), createNewFoodDomain.getSubFoodType());
+        if (subFoodTypeEntity == null){
+            throw new CustomException("Sub food type ko tim thay", "Sub food type ko tim thay", HttpStatus.BAD_REQUEST);
+        }
+        foodEntity.setSubFoodTypeId(subFoodTypeEntity.getId());
+        foodEntity.setOriginalPrice(StringUtils.convertStringToLongOrNull(createNewFoodDomain.getPrice()));
+        foodEntity.setDiscountPercent(StringUtils.convertStringToIntegerOrNull(createNewFoodDomain.getDiscountPercent()));
+
+        if (foodEntity.getDiscountPercent() == null){
+            foodEntity.setDiscountPercent(0);
+        }
+
+        Double priceDouble = Math.ceil( (double) foodEntity.getOriginalPrice() / 100 * (100 - foodEntity.getDiscountPercent()) / 1000);
+        Long price = priceDouble.longValue() * 1000;
+
+        foodEntity.setPrice(price);
+        foodEntity.setAvatar(createNewFoodDomain.getAvatar());
+        foodEntity.setStoreId(storeEntity.getId());
+        if (foodEntity.getDiscountPercent().equals(0)){
+            foodEntity.setDiscountPercent(null);
+        }
+
+        foodRepository.save(foodEntity);
+
+        // return list food
+
+        return getAllFoodOfStoreAdmin(createNewFoodDomain.getStoreId(), 0, "");
+    }
+
+    public ResponseDataAPI editFoodOfStore(EditFoodDomain domain) {
+        Long foodId = StringUtils.convertObjectToLongOrNull(domain.getId());
+        if (foodId == null){
+            throw new CustomException("food id bi sai", "food id bi sai", HttpStatus.BAD_REQUEST);
+        }
+
+        FoodEntity foodEntity = foodRepository.findById(foodId).orElse(null);
+        if (foodEntity == null){
+            throw new CustomException("food id bi sai", "food id bi sai", HttpStatus.BAD_REQUEST);
+        }
+
+        StoreEntity storeEntity = storeRepository.findById(foodEntity.getStoreId()).orElse(null);
+        if (storeEntity == null){
+            throw new CustomException("store bi sai", "store bi sai", HttpStatus.BAD_REQUEST);
+        }
+
+        Map<String, Long> listConvertFoodType = new HashMap<>();
+        listConvertFoodType.put("Cơm", 1l);
+        listConvertFoodType.put("Bún/phở", 2l);
+        listConvertFoodType.put("Đồ ăn vặt/ăn nhanh", 3l);
+        listConvertFoodType.put("Đặt sản", 4l);
+        listConvertFoodType.put("Healthy", 5l);
+        listConvertFoodType.put("Đồ uống", 6l);
+
+        List<String> listFoodNameOfStore = foodRepository.findAllByStoreId(storeEntity.getId()).stream().filter(t -> !t.getId().equals(foodId)).map(t -> t.getName()).collect(Collectors.toList());
+        if (listFoodNameOfStore.contains(domain.getName())){
+            throw new CustomException("Tên của thức ăn đã bị trùng, vui lòng chọn tên khác !", "Tên của thức ăn đã bị trùng, vui lòng chọn tên khác !", HttpStatus.BAD_REQUEST);
+        }
+
+        foodEntity.setName(domain.getName());
+        foodEntity.setFoodTypeId(listConvertFoodType.get(domain.getFoodType()));
+        SubFoodTypeEntity subFoodTypeEntity = subFoodTypeRepository.findByStoreIdAndName(storeEntity.getId(), domain.getSubFoodType());
+        if (subFoodTypeEntity == null){
+            throw new CustomException("Sub food type ko tim thay", "Sub food type ko tim thay", HttpStatus.BAD_REQUEST);
+        }
+        foodEntity.setSubFoodTypeId(subFoodTypeEntity.getId());
+        foodEntity.setOriginalPrice(StringUtils.convertStringToLongOrNull(domain.getPrice()));
+        foodEntity.setDiscountPercent(StringUtils.convertStringToIntegerOrNull(domain.getDiscountPercent()));
+
+        if (foodEntity.getDiscountPercent() == null){
+            foodEntity.setDiscountPercent(0);
+        }
+
+        Double priceDouble = Math.ceil( (double) foodEntity.getOriginalPrice() / 100 * (100 - foodEntity.getDiscountPercent()) / 1000);
+        Long price = priceDouble.longValue() * 1000;
+
+        foodEntity.setPrice(price);
+        foodEntity.setAvatar(domain.getAvatar());
+        foodEntity.setStoreId(storeEntity.getId());
+
+        if (foodEntity.getDiscountPercent().equals(0)){
+            foodEntity.setDiscountPercent(null);
+        }
+
+        foodRepository.save(foodEntity);
+
+        return getAllFoodOfStoreAdmin(storeEntity.getId().toString(), 0, "");
+    }
+
+    @Transactional
+    public ResponseDataAPI deleteFoodOfStore(String foodIdStr) {
+        Long foodId = StringUtils.convertStringToLongOrNull(foodIdStr);
+        if (foodId == null){
+            throw new CustomException("food id bi sai", "food id bi sai", HttpStatus.BAD_REQUEST);
+        }
+        FoodEntity foodEntity = foodRepository.findById(foodId).or(() -> {throw new CustomException("food id bi sai", "food id bi sai", HttpStatus.BAD_REQUEST);}).orElse(null);
+        StoreEntity storeEntity = storeRepository.findById(foodEntity.getStoreId()).orElse(null);
+
+        if (storeEntity == null){
+            throw new CustomException("store id bi sai", "store id bi sai", HttpStatus.BAD_REQUEST);
+        }
+        cartRepository.deleteAllCartByFoodId(foodId);
+        favouriteRepository.deleteAllFavouriteByFoodId(foodId);
+        ratingRepository.deleteAllRatingByFoodId(foodId);
+//        transactionItemRepository.deleteAllByFoodId(foodId);
+        foodEntity.setIsDeleted(1);
+        foodRepository.save(foodEntity);
+
+        return getAllFoodOfStoreAdmin(storeEntity.getId().toString(), 0, "");
     }
 }
 

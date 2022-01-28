@@ -9,4 +9,6 @@ import java.util.List;
 @Repository
 public interface SubFoodTypeRepository extends JpaRepository<SubFoodTypeEntity, Long> {
     List<SubFoodTypeEntity> findAllByStoreId(Long storeId);
+
+    SubFoodTypeEntity findByStoreIdAndName(Long storeId, String name);
 }

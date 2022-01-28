@@ -62,4 +62,25 @@ public class ImageController {
         }
         return ResponseEntity.ok(ResponseDataAPI.builder().data(imageUrl).build());
     }
+
+    @RequestMapping(value = "/upload-image" ,method = RequestMethod.POST)
+    public ResponseEntity<ResponseDataAPI> uploadImage(@RequestParam("filea") MultipartFile file) throws IOException {
+        Path filepath = Path.of("imageupload.jpg");
+        Cloudinary cloudinary = new Cloudinary(ObjectUtils.asMap(
+                "cloud_name", "djifhw3lo",
+                "api_key", "992726224781494",
+                "api_secret", "Tol4roEhAhgOJ3NaNsnAyWDDrD0",
+                "secure", true));
+        String imageUrl = "";
+        try (OutputStream os = Files.newOutputStream(filepath)) {
+            os.write(file.getBytes());
+            Map uploadResult = cloudinary.uploader().upload(new File("imageupload.jpg"), ObjectUtils.emptyMap());
+            System.out.println("upload moi : " + uploadResult.get("url"));
+            imageUrl = (String) uploadResult.get("url");
+            ;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return ResponseEntity.ok(ResponseDataAPI.builder().data(imageUrl).build());
+    }
 }

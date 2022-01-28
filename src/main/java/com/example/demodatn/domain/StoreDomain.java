@@ -13,6 +13,8 @@ public class StoreDomain {
     private Double distance;
     private Double summaryRating;
     private Integer numberOfRating;
+    private String openTime;
+    private String priceRange;
 
     public String getId() {
         return id;
@@ -76,5 +78,21 @@ public class StoreDomain {
 
     public void setNumberOfRating(Integer numberOfRating) {
         this.numberOfRating = numberOfRating;
+    }
+
+    public String getOpenTime() {
+        return openTime;
+    }
+
+    public void setOpenTime(String openTime) {
+        this.openTime = openTime;
+    }
+
+    public String getPriceRange() {
+        return priceRange;
+    }
+
+    public void setPriceRange(String priceRange) {
+        this.priceRange = priceRange;
     }
 }

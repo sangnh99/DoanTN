@@ -21,4 +21,8 @@ public interface CartRepository extends JpaRepository<CartEntity, Long> {
     @Modifying
     @Query(value = "update CartEntity set isDeleted = 1 where userAppId = ?1")
     void deleteCartByUserAppId(Long userAppId);
+
+    @Modifying
+    @Query(value = "update CartEntity set isDeleted = 1 where foodId = ?1")
+    void deleteAllCartByFoodId(Long foodId);
 }

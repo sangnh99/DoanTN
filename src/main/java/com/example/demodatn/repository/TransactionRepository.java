@@ -13,6 +13,6 @@ import java.util.List;
 public interface TransactionRepository extends JpaRepository<TransactionEntity, Long> {
     List<TransactionEntity> findAllByUserAppIdOrderByCreatedDateDesc(Long userAppId);
 
-    @Query(value = "select t from TransactionEntity t inner join StoreEntity s on s.id = t.storeId where lower(s.name) like %?1%")
+    @Query(value = "select t from TransactionEntity t inner join StoreEntity s on s.id = t.storeId inner join UserAppEntity u on u.id = t.userAppId where lower(s.name) like %?1% or lower(u.username) like %?1% ")
     Page<TransactionEntity> getAllTransactionOfUser(String valueSearch, Pageable pageable);
 }

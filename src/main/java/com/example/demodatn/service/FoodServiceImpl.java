@@ -239,7 +239,10 @@ public class FoodServiceImpl {
                         return foodDomain;
                     })
                     .collect(Collectors.toList()));
-            listResult.add(domain);
+
+            if (!CollectionUtils.isEmpty(domain.getListFood())){
+                listResult.add(domain);
+            }
         }
         return listResult;
     }
@@ -405,11 +408,12 @@ public class FoodServiceImpl {
                     List<String> listFoodStr = new ArrayList<>(Arrays.asList(listItem));
                     listFoodStr.remove(0);
                     List<Long> listFoodId = listFoodStr.stream().map(t -> StringUtils.convertStringToLongOrNull(t)).collect(Collectors.toList());
-                    List<Long> listRatingFoodOfUser = ratingRepository.findAllByUserAppId(userAppId)
+                    List<Long> listRatingFoodOfUser = ratingRepository.findAllByUserAppId(userAppId) // list nay ko co lien quan toi food bi xoa
                             .stream().map(t -> t.getFoodId())
                             .distinct()
                             .collect(Collectors.toList());
                     List<Long> listWillShowFoodId = listFoodId.stream().filter(t -> !listRatingFoodOfUser.contains(t))
+                            .filter(t -> foodRepository.findById(t).orElse(null) != null)
                             .limit(16)
                             .collect(Collectors.toList());
 
@@ -621,13 +625,24 @@ public class FoodServiceImpl {
                 itemDomain.setTransactionId(transaction.getId().toString());
                 itemDomain.setFoodId(transactionItemEntity.getFoodId().toString());
                 FoodEntity foodEntity = foodRepository.findById(transactionItemEntity.getFoodId()).orElse(null);
-                itemDomain.setAmount(transactionItemEntity.getAmount());
-                itemDomain.setNote(transactionItemEntity.getNote());
-                itemDomain.setPrice(transactionItemEntity.getPrice());
-                itemDomain.setDiscountPercent(transactionItemEntity.getDiscountPercent());
-                itemDomain.setOriginalPrice(transactionItemEntity.getOriginalPrice());
-                itemDomain.setFoodAvatar(foodEntity.getAvatar());
-                itemDomain.setFoodName(foodEntity.getName());
+                if (foodEntity != null){
+                    itemDomain.setAmount(transactionItemEntity.getAmount());
+                    itemDomain.setNote(transactionItemEntity.getNote());
+                    itemDomain.setPrice(transactionItemEntity.getPrice());
+                    itemDomain.setDiscountPercent(transactionItemEntity.getDiscountPercent());
+                    itemDomain.setOriginalPrice(transactionItemEntity.getOriginalPrice());
+                    itemDomain.setFoodAvatar(foodEntity.getAvatar());
+                    itemDomain.setFoodName(foodEntity.getName());
+                } else {
+                    itemDomain.setAmount(0);
+                    itemDomain.setNote("");
+                    itemDomain.setPrice(0l);
+                    itemDomain.setDiscountPercent(0);
+                    itemDomain.setOriginalPrice(0l);
+                    itemDomain.setFoodAvatar("https://media.istockphoto.com/vectors/red-white-stamp-grunge-deleted-vector-id1174096245?s=612x612");
+                    itemDomain.setFoodName("");
+                }
+
                 listResponseItem.add(itemDomain);
             }
             domain.setListItem(listResponseItem);

@@ -271,13 +271,25 @@ public class UserAppServiceImpl implements UserAppService {
                 itemDomain.setTransactionId(transaction.getId().toString());
                 itemDomain.setFoodId(transactionItemEntity.getFoodId().toString());
                 FoodEntity foodEntity = foodRepository.findById(transactionItemEntity.getFoodId()).orElse(null);
-                itemDomain.setAmount(transactionItemEntity.getAmount());
-                itemDomain.setNote(transactionItemEntity.getNote());
-                itemDomain.setPrice(transactionItemEntity.getPrice());
-                itemDomain.setDiscountPercent(transactionItemEntity.getDiscountPercent());
-                itemDomain.setOriginalPrice(transactionItemEntity.getOriginalPrice());
-                itemDomain.setFoodAvatar(foodEntity.getAvatar());
-                itemDomain.setFoodName(foodEntity.getName());
+                if (foodEntity != null){
+                    itemDomain.setAmount(transactionItemEntity.getAmount());
+                    itemDomain.setNote(transactionItemEntity.getNote());
+                    itemDomain.setPrice(transactionItemEntity.getPrice());
+                    itemDomain.setDiscountPercent(transactionItemEntity.getDiscountPercent());
+                    itemDomain.setOriginalPrice(transactionItemEntity.getOriginalPrice());
+                    itemDomain.setFoodAvatar(foodEntity.getAvatar());
+                    itemDomain.setFoodName(foodEntity.getName());
+                } else {
+                    itemDomain.setAmount(0);
+                    itemDomain.setNote("");
+                    itemDomain.setPrice(0l);
+                    itemDomain.setDiscountPercent(0);
+                    itemDomain.setOriginalPrice(0l);
+                    itemDomain.setFoodAvatar("https://media.istockphoto.com/vectors/red-white-stamp-grunge-deleted-vector-id1174096245?s=612x612");
+                    itemDomain.setFoodName("");
+                }
+
+
                 listResponseItem.add(itemDomain);
             }
             domain.setListItem(listResponseItem);

@@ -2,6 +2,7 @@ package com.example.demodatn.controller;
 
 import com.example.demodatn.domain.*;
 import com.example.demodatn.service.FoodServiceImpl;
+import com.example.demodatn.service.StoreServiceImpl;
 import com.example.demodatn.service.TransactionServiceImpl;
 import com.example.demodatn.service.UserAppServiceImpl;
 import com.example.demodatn.util.StringUtils;
@@ -17,12 +18,14 @@ public class AdminController {
     @Autowired
     private FoodServiceImpl foodService;
 
-
     @Autowired
     private TransactionServiceImpl transactionService;
 
     @Autowired
     private UserAppServiceImpl userAppService;
+
+    @Autowired
+    private StoreServiceImpl storeService;
 
     @GetMapping("/transaction")
     public ResponseEntity<ResponseDataAPI> getAllUserTransaction(
@@ -74,5 +77,63 @@ public class AdminController {
     public ResponseEntity<ResponseDataAPI> changePasswordAdmin(@RequestBody ChangePasswordAdminDomain domain){
         userAppService.changePasswordAdmin(domain);
         return ResponseEntity.ok(ResponseDataAPI.builder().build());
+    }
+
+    @PostMapping("/store/create")
+    public ResponseEntity<ResponseDataAPI> createNewStore(@RequestBody CreateNewStoreDomain domain){
+        storeService.createNewStoreAdmin(domain);
+        return ResponseEntity.ok(ResponseDataAPI.builder().build());
+    }
+
+    @GetMapping("/store")
+    public ResponseEntity<ResponseDataAPI> getAllStoreAdmin(@RequestParam("offset") Integer offset, @RequestParam("value_search") String valueSearch){
+        if (offset == null || offset <= 1) {
+            offset = 0;
+        } else {
+            offset = offset - 1;
+        }
+        ResponseDataAPI responseDataAPI = storeService.getAllStoreAdmin(valueSearch, offset);
+
+        return ResponseEntity.ok(ResponseDataAPI.builder().data(responseDataAPI.getData()).totalRows(responseDataAPI.getTotalRows()).build());
+    }
+
+    @GetMapping("/store/edit/{store_id}")
+    public ResponseEntity<ResponseDataAPI> getInfoOfStoreAdmin(@PathVariable("store_id") String storeId){
+        ResponseDataAPI responseDataAPI = storeService.getInfoOfStoreAdmin(storeId);
+        return ResponseEntity.ok(ResponseDataAPI.builder().data(responseDataAPI.getData()).build());
+    }
+
+    @PostMapping("/store/edit/save")
+    public ResponseEntity<ResponseDataAPI> editInfoStore(@RequestBody EditStoreDomain domain){
+        storeService.editInfoStore(domain);
+        return ResponseEntity.ok(ResponseDataAPI.builder().build());
+    }
+
+    @GetMapping("/store/edit/{store_id}/food")
+    public ResponseEntity<ResponseDataAPI> getAllFoodOfStoreAdmin(@PathVariable("store_id") String storeId, @RequestParam("offset") Integer offset, @RequestParam("value_search") String valueSearch){
+        if (offset == null || offset <= 1) {
+            offset = 0;
+        } else {
+            offset = offset - 1;
+        }
+        ResponseDataAPI responseDataAPI = storeService.getAllFoodOfStoreAdmin(storeId, offset, valueSearch);
+        return ResponseEntity.ok(ResponseDataAPI.builder().data(responseDataAPI.getData()).totalRows(responseDataAPI.getTotalRows()).build());
+    }
+
+    @PostMapping("/store/edit/add-food")
+    public ResponseEntity<ResponseDataAPI> addNewFoodAdmin(@RequestBody CreateNewFoodEditStoreDomain domain){
+        ResponseDataAPI responseDataAPI = storeService.createNewFoodEditStoreDomain(domain);
+        return ResponseEntity.ok(ResponseDataAPI.builder().data(responseDataAPI.getData()).totalRows(responseDataAPI.getTotalRows()).build());
+    }
+    @PostMapping("/store/edit/edit-food")
+    public ResponseEntity<ResponseDataAPI> editFoodAdmin(@RequestBody EditFoodDomain domain){
+        ResponseDataAPI responseDataAPI = storeService.editFoodOfStore(domain);
+        return ResponseEntity.ok(ResponseDataAPI.builder().data(responseDataAPI.getData()).totalRows(responseDataAPI.getTotalRows()).build());
+    }
+
+    @PostMapping("/store/delete/food/{food_id}")
+    public ResponseEntity<ResponseDataAPI> deleteFoodOfStore(@PathVariable("food_id") String foodIdStr){
+        ResponseDataAPI responseDataAPI = storeService.deleteFoodOfStore(foodIdStr);
+        return ResponseEntity.ok(ResponseDataAPI.builder().data(responseDataAPI.getData()).totalRows(responseDataAPI.getTotalRows()).build());
     }
 }
