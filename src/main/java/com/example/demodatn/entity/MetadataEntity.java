@@ -17,6 +17,11 @@ public class MetadataEntity extends BaseEntity {
     private Integer type;
     @Column(name = "VALUE")
     private String value;
+    @Column(name = "TOTAL_INCOME")
+    private Long totalIncome;
+    @Column(name = "TOTAL_FOOD")
+    private Integer totalFood;
+
 
     public Long getId() {
         return id;
@@ -40,5 +45,21 @@ public class MetadataEntity extends BaseEntity {
 
     public void setValue(String value) {
         this.value = value;
+    }
+
+    public Long getTotalIncome() {
+        return totalIncome;
+    }
+
+    public void setTotalIncome(Long totalIncome) {
+        this.totalIncome = totalIncome;
+    }
+
+    public Integer getTotalFood() {
+        return totalFood;
+    }
+
+    public void setTotalFood(Integer totalFood) {
+        this.totalFood = totalFood;
     }
 }

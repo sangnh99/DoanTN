@@ -1,11 +1,9 @@
 package com.example.demodatn.controller;
 
 import com.example.demodatn.domain.*;
-import com.example.demodatn.service.FoodServiceImpl;
-import com.example.demodatn.service.StoreServiceImpl;
-import com.example.demodatn.service.TransactionServiceImpl;
-import com.example.demodatn.service.UserAppServiceImpl;
+import com.example.demodatn.service.*;
 import com.example.demodatn.util.StringUtils;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -26,6 +24,9 @@ public class AdminController {
 
     @Autowired
     private StoreServiceImpl storeService;
+
+    @Autowired
+    private AdminServiceImpl adminService;
 
     @GetMapping("/transaction")
     public ResponseEntity<ResponseDataAPI> getAllUserTransaction(
@@ -135,5 +136,25 @@ public class AdminController {
     public ResponseEntity<ResponseDataAPI> deleteFoodOfStore(@PathVariable("food_id") String foodIdStr){
         ResponseDataAPI responseDataAPI = storeService.deleteFoodOfStore(foodIdStr);
         return ResponseEntity.ok(ResponseDataAPI.builder().data(responseDataAPI.getData()).totalRows(responseDataAPI.getTotalRows()).build());
+    }
+
+    @GetMapping("/dashboard/info")
+    public ResponseEntity<ResponseDataAPI> getTotalInfo(){
+        return ResponseEntity.ok(ResponseDataAPI.builder().data(adminService.getTotalInfoDashboard()).build());
+    }
+
+    @GetMapping("/dashboard/income-chart")
+    public ResponseEntity<ResponseDataAPI> getDataForIncomeAndNumberUserChartByMonth(){
+        return ResponseEntity.ok(ResponseDataAPI.builder().data(adminService.getDataForIncomeAndNumberOfOrderChartByMonth()).build());
+    }
+
+    @GetMapping("/dashboard/store-chart")
+    public ResponseEntity<ResponseDataAPI> getIncomeByStoreChart(){
+        return ResponseEntity.ok(ResponseDataAPI.builder().data(adminService.getIncomeByStoreChart()).build());
+    }
+
+    @GetMapping("/dashboard/user-chart")
+    public ResponseEntity<ResponseDataAPI> getUserDataChart(){
+        return ResponseEntity.ok(ResponseDataAPI.builder().data(adminService.getUserDataChart()).build());
     }
 }

@@ -32,4 +32,7 @@ public interface UserAppRepository extends JpaRepository<UserAppEntity, Long> {
 
     @Query(value = "select u from UserAppEntity  u where lower(u.username) like %?1% and u.id <> 18")
     Page<UserAppEntity> getListUserBySearchValue(String valueSearch, Pageable pageable);
+
+    @Query(value = "select u from UserAppEntity u order by u.createdDate asc ")
+    List<UserAppEntity> getListUserAppByCreateDate();
 }
