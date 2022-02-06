@@ -86,26 +86,30 @@ public class UserAppServiceImpl implements UserAppService {
     }
 
     @Override
-    public void sendEmailVerify(String recipientEmail, String token) throws Exception {
-        MimeMessage message = mailSender.createMimeMessage();
-        MimeMessageHelper helper = new MimeMessageHelper(message);
+    public void sendEmailVerify(String recipientEmail, String token){
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message);
 
-        helper.setFrom("sangnh99@gmail.com", "Sang Nguyen");
-        helper.setTo(recipientEmail);
+            helper.setFrom("sangnh99@gmail.com", "Sang Nguyen");
+            helper.setTo(recipientEmail);
 
-        String subject = "Here's the link to verify your email";
+            String subject = "Here's the link to verify your email";
 
-        String content = "<p>Hello,</p>"
-                + "<p>You have requested to verify your email.</p>"
-                + "<p>This is the code to verify your email:</p>"
-                + "<p>" + token + "</p>";
+            String content = "<p>Hello,</p>"
+                    + "<p>You have requested to verify your email.</p>"
+                    + "<p>This is the code to verify your email:</p>"
+                    + "<p>" + token + "</p>";
 
 
-        helper.setSubject(subject);
+            helper.setSubject(subject);
 
-        helper.setText(content, true);
+            helper.setText(content, true);
 
-        mailSender.send(message);
+            mailSender.send(message);
+        } catch (Exception e){
+            throw new CustomException("Email bạn nhập không tồn tại, vui lòng nhập email khác !", "Email bạn nhập không tồn tại, vui lòng nhập email khác !", HttpStatus.BAD_REQUEST);
+        }
 
     }
 
@@ -134,15 +138,18 @@ public class UserAppServiceImpl implements UserAppService {
     @Override
     public void registerUserApp(RegisterDomain domain, String token) throws Exception {
         if (!domain.getConfirmpassword().equals(domain.getPassword())){
-            throw new Exception("Mat khau xac nhan khong dung!");
+            throw new CustomException("Mật khẩu xác nhận không đúng", "Mat khau xac nhan khong dung!", HttpStatus.BAD_REQUEST);
         }
         BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
         String encodedPassword = passwordEncoder.encode(domain.getPassword());
         UserAppEntity userApp1 = userAppRepository.findByEmail(domain.getEmail());
         UserAppEntity userApp2 = userAppRepository.findByUsername(domain.getUsername()).orElse(null);
 
-        if (userApp1 != null || userApp2 != null){
-            throw new Exception("Username hoac email da ton tai");
+        if (userApp1 != null){
+            throw new CustomException("Email đã tồn tại, vui lòng nhập email khác !", "Username hoac email da ton tai", HttpStatus.BAD_REQUEST);
+        }
+        if (userApp2 != null){
+            throw new CustomException("Tên đăng nhập đã tồn tại, vui lòng nhập tên đăng nhập khác !", "Username hoac email da ton tai", HttpStatus.BAD_REQUEST);
         }
 
         UserAppEntity userAppEntity = new UserAppEntity();
@@ -154,6 +161,8 @@ public class UserAppServiceImpl implements UserAppService {
         userAppEntity.setVerifyEmailToken(token);
         userAppEntity.setIsLocked(IsLocked.TRUE.getValue());
         UserAppEntity user = userAppRepository.save(userAppEntity);
+
+        sendEmailVerify(domain.getEmail(), token);
     }
 
     @Override
@@ -163,8 +172,8 @@ public class UserAppServiceImpl implements UserAppService {
             throw new Exception("Email khong ton tai");
         }
         if (!domain.getToken().equals(userAppEntity.getVerifyEmailToken())){
-            userAppEntity.setIsDeleted(1);
-            userAppRepository.save(userAppEntity);
+//            userAppEntity.setIsDeleted(1);
+//            userAppRepository.save(userAppEntity);
             throw new Exception("Ma xac thuc khong dung");
         }
 
@@ -328,6 +337,7 @@ public class UserAppServiceImpl implements UserAppService {
         transactionEntity = transactionRepository.save(transactionEntity);
 
         List<TransactionItemEntity> listTransactionItem = new ArrayList<>();
+        List<FoodEntity> listFoodBuy = new ArrayList<>();
         for (CartEntity cartEntity : listCartOfUser){
             //get total price
             totalPrice += cartEntity.getPrice()*cartEntity.getAmount();
@@ -336,6 +346,11 @@ public class UserAppServiceImpl implements UserAppService {
             TransactionItemEntity transactionItemEntity = new TransactionItemEntity();
             transactionItemEntity.setTransactionId(transactionEntity.getId());
             FoodEntity foodEntityItem = foodRepository.findById(cartEntity.getFoodId()).orElse(null);
+            if (foodEntityItem == null){
+                throw new CustomException("Food id ko ton tai", "Food id ko ton tai", HttpStatus.BAD_REQUEST);
+            }
+            foodEntityItem.setTotalBuy(foodEntityItem.getTotalBuy() + cartEntity.getAmount());
+            listFoodBuy.add(foodEntityItem);
             transactionItemEntity.setFoodId(foodEntityItem.getId());
             transactionItemEntity.setAmount(cartEntity.getAmount());
             transactionItemEntity.setPrice(foodEntityItem.getPrice());
@@ -351,6 +366,7 @@ public class UserAppServiceImpl implements UserAppService {
             throw new CustomException("Gia tri don hang bi tinh sai"
                     , "Gia tri don hang bi tinh sai", HttpStatus.BAD_REQUEST);
         }
+        foodRepository.saveAll(listFoodBuy);
         transactionEntity.setTotal(totalPrice);
         transactionRepository.save(transactionEntity);
         transactionItemRepository.saveAll(listTransactionItem);

@@ -18,6 +18,8 @@ public class FoodDomain {
     private Long originalPrice;
     private Double distance;
     private String topImageUrl;
+    private Integer totalBuy;
+    private Integer isBestSeller;
 
     public String getId() {
         return id;
@@ -121,5 +123,21 @@ public class FoodDomain {
 
     public void setTopImageUrl(String topImageUrl) {
         this.topImageUrl = topImageUrl;
+    }
+
+    public Integer getTotalBuy() {
+        return totalBuy;
+    }
+
+    public void setTotalBuy(Integer totalBuy) {
+        this.totalBuy = totalBuy;
+    }
+
+    public Integer getIsBestSeller() {
+        return isBestSeller;
+    }
+
+    public void setIsBestSeller(Integer isBestSeller) {
+        this.isBestSeller = isBestSeller;
     }
 }

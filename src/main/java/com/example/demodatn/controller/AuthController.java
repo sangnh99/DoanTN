@@ -96,7 +96,7 @@ public class AuthController {
         String token = RandomString.make(30);
         System.out.println("Token :" + token);
         userAppService.registerUserApp(domain, token);
-        userAppService.sendEmailVerify(domain.getEmail(), token);
+//        userAppService.sendEmailVerify(domain.getEmail(), token);
         return ResponseEntity.ok(ResponseDataAPI.builder().build());
     }
 

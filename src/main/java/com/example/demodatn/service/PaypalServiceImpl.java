@@ -68,6 +68,7 @@ public class PaypalServiceImpl {
         transactionEntity = transactionRepository.save(transactionEntity);
 
         List<TransactionItemEntity> listTransactionItem = new ArrayList<>();
+        List<FoodEntity> listFoodBuy = new ArrayList<>();
         for (CartEntity cartEntity : listCartOfUser){
             //get total price
             totalPrice += cartEntity.getPrice()*cartEntity.getAmount();
@@ -76,6 +77,11 @@ public class PaypalServiceImpl {
             TransactionItemEntity transactionItemEntity = new TransactionItemEntity();
             transactionItemEntity.setTransactionId(transactionEntity.getId());
             FoodEntity foodEntityItem = foodRepository.findById(cartEntity.getFoodId()).orElse(null);
+            if (foodEntityItem == null){
+                throw new CustomException("Food id ko ton tai", "Food id ko ton tai", HttpStatus.BAD_REQUEST);
+            }
+            foodEntityItem.setTotalBuy(foodEntityItem.getTotalBuy() + cartEntity.getAmount());
+            listFoodBuy.add(foodEntityItem);
             transactionItemEntity.setFoodId(foodEntityItem.getId());
             transactionItemEntity.setAmount(cartEntity.getAmount());
             transactionItemEntity.setPrice(foodEntityItem.getPrice());
@@ -87,6 +93,7 @@ public class PaypalServiceImpl {
             //delete cart
             cartEntity.setIsDeleted(1);
         }
+        foodRepository.saveAll(listFoodBuy);
         transactionEntity.setTotal(totalPrice);
         transactionRepository.save(transactionEntity);
         transactionItemRepository.saveAll(listTransactionItem);
