@@ -148,6 +148,8 @@ public class StoreServiceImpl {
                 foodDomain.setSummaryRating("0");
             }
             foodDomain.setAvatar(t.getAvatar());
+            foodDomain.setIsBestSeller(t.getIsBestSeller());
+            foodDomain.setTotalBuy(t.getTotalBuy());
             foodDomain.setDiscountPercent(t.getDiscountPercent());
             foodDomain.setOriginalPrice(t.getOriginalPrice());
             foodDomain.setPrice(StringUtils.convertObjectToString(t.getPrice()));
@@ -210,6 +212,8 @@ public class StoreServiceImpl {
                         foodDomain.setStoreName(storeEntity.getName());
                         foodDomain.setSummaryRating(StringUtils.convertObjectToString(t.getSummaryRating()));
                         foodDomain.setAvatar(t.getAvatar());
+                        foodDomain.setIsBestSeller(t.getIsBestSeller());
+                        foodDomain.setTotalBuy(t.getTotalBuy());
                         foodDomain.setDiscountPercent(t.getDiscountPercent());
                         foodDomain.setOriginalPrice(t.getOriginalPrice());
                         foodDomain.setPrice(StringUtils.convertObjectToString(t.getPrice()));
@@ -290,6 +294,8 @@ public class StoreServiceImpl {
             foodEntity.setPrice(price);
             foodEntity.setAvatar(createNewFoodDomain.getAvatar());
             foodEntity.setStoreId(storeEntity.getId());
+            foodEntity.setIsBestSeller(0);
+            foodEntity.setTotalBuy(0);
 
             if (foodEntity.getDiscountPercent().equals(0)){
                 foodEntity.setDiscountPercent(null);
@@ -497,6 +503,8 @@ public class StoreServiceImpl {
         foodEntity.setPrice(price);
         foodEntity.setAvatar(createNewFoodDomain.getAvatar());
         foodEntity.setStoreId(storeEntity.getId());
+        foodEntity.setIsBestSeller(0);
+        foodEntity.setTotalBuy(0);
         if (foodEntity.getDiscountPercent().equals(0)){
             foodEntity.setDiscountPercent(null);
         }

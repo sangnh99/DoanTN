@@ -349,6 +349,9 @@ public class UserAppServiceImpl implements UserAppService {
             if (foodEntityItem == null){
                 throw new CustomException("Food id ko ton tai", "Food id ko ton tai", HttpStatus.BAD_REQUEST);
             }
+            if (foodEntityItem.getTotalBuy() == null){
+                foodEntityItem.setTotalBuy(0);
+            }
             foodEntityItem.setTotalBuy(foodEntityItem.getTotalBuy() + cartEntity.getAmount());
             listFoodBuy.add(foodEntityItem);
             transactionItemEntity.setFoodId(foodEntityItem.getId());
