@@ -7,8 +7,10 @@ import com.example.demodatn.entity.*;
 import com.example.demodatn.exception.CustomException;
 import com.example.demodatn.repository.*;
 import com.example.demodatn.util.CalculateDistanceUtils;
+import com.example.demodatn.util.DateTimeUtils;
 import com.example.demodatn.util.FormatRatingUtils;
 import com.example.demodatn.util.StringUtils;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -61,6 +63,12 @@ public class FoodServiceImpl {
     @Autowired
     private FormatRatingUtils formatRatingUtils;
 
+    @Autowired
+    private TransactionItemRepository transactionItemRepository;
+
+    @Autowired
+    private TransactionRepository transactionRepository;
+
     public List<FoodDomain> getListFoodByFoodType(String userApp, String foodTypeStr, BasicRequest request){
         Long userAppId = StringUtils.convertStringToLongOrNull(userApp);
         if (userAppId == null){
@@ -104,6 +112,8 @@ public class FoodServiceImpl {
                     domain.setStoreName(storeRepository.findById(t.getStoreId()).orElse(null).getName());
                     domain.setSummaryRating(StringUtils.convertObjectToString(t.getSummaryRating()));
                     domain.setAvatar(t.getAvatar());
+                    domain.setIsBestSeller(t.getIsBestSeller());
+                    domain.setTotalBuy(t.getTotalBuy());
                     domain.setPrice(StringUtils.convertObjectToString(t.getPrice()));
                     domain.setDiscountPercent(t.getDiscountPercent());
                     domain.setOriginalPrice(t.getOriginalPrice());
@@ -141,6 +151,8 @@ public class FoodServiceImpl {
         domain.setDiscountPercent(t.getDiscountPercent());
         domain.setOriginalPrice(t.getOriginalPrice());
         domain.setStoreAddress(storeEntity.getAddress());
+        domain.setIsBestSeller(t.getIsBestSeller());
+        domain.setTotalBuy(t.getTotalBuy());
         domain.setDistance(calculateDistanceUtils.getDistanceOfOnlyOneStore(userAppId, t.getStoreId()));
         FavouriteEntity favouriteEntity = favouriteRepository.findByUserAppIdAndItemIdAndType(userAppId, foodId, FavouriteType.FOOD.getValue());
         if (favouriteEntity != null){
@@ -149,6 +161,10 @@ public class FoodServiceImpl {
             domain.setIsFavourite(0);
         }
         domain.setNote(cartNote);
+
+        //get list recommend and same food
+        domain.setListRecommendSameFood(this.geListRecommendFoodDetail(userApp, foodId));
+
         List<RatingEntity> listRatingIds = ratingRepository.findAllByFoodId(foodId);
         List<CommentDomain> listComments = new ArrayList<>();
         domain.setNumberOfVote(StringUtils.convertObjectToString(listRatingIds.size()));
@@ -227,11 +243,16 @@ public class FoodServiceImpl {
                         foodDomain.setPrice(StringUtils.convertObjectToString(t.getPrice()));
                         foodDomain.setDiscountPercent(t.getDiscountPercent());
                         foodDomain.setOriginalPrice(t.getOriginalPrice());
+                        foodDomain.setIsBestSeller(t.getIsBestSeller());
+                        foodDomain.setTotalBuy(t.getTotalBuy());
                         foodDomain.setDistance(distance);
                         return foodDomain;
                     })
                     .collect(Collectors.toList()));
-            listResult.add(domain);
+
+            if (!CollectionUtils.isEmpty(domain.getListFood())){
+                listResult.add(domain);
+            }
         }
         return listResult;
     }
@@ -285,6 +306,8 @@ public class FoodServiceImpl {
                     domain.setStoreName(storeRepository.findById(t.getStoreId()).orElse(null).getName());
                     domain.setSummaryRating(StringUtils.convertObjectToString(formatRatingUtils.formatRatingOneNumber(t.getSummaryRating())));
                     domain.setAvatar(t.getAvatar());
+                    domain.setIsBestSeller(t.getIsBestSeller());
+                    domain.setTotalBuy(t.getTotalBuy());
                     domain.setPrice(StringUtils.convertObjectToString(t.getPrice()));
                     domain.setDiscountPercent(t.getDiscountPercent());
                     domain.setOriginalPrice(t.getOriginalPrice());
@@ -396,8 +419,11 @@ public class FoodServiceImpl {
                 if (userAppId.equals(userId)){
                     List<String> listFoodStr = new ArrayList<>(Arrays.asList(listItem));
                     listFoodStr.remove(0);
-                    List<Long> listFoodId = listFoodStr.stream().map(t -> StringUtils.convertStringToLongOrNull(t)).collect(Collectors.toList());
-                    List<Long> listRatingFoodOfUser = ratingRepository.findAllByUserAppId(userAppId)
+                    List<Long> listFoodId = listFoodStr.stream()
+                            .map(t -> StringUtils.convertStringToLongOrNull(t))
+                            .filter(t -> foodRepository.findById(t).orElse(null) != null)
+                            .collect(Collectors.toList());
+                    List<Long> listRatingFoodOfUser = ratingRepository.findAllByUserAppId(userAppId) // list nay ko co lien quan toi food bi xoa
                             .stream().map(t -> t.getFoodId())
                             .distinct()
                             .collect(Collectors.toList());
@@ -442,6 +468,8 @@ public class FoodServiceImpl {
                             foodDomain.setStoreName(storeEntity.getName());
                             foodDomain.setSummaryRating(StringUtils.convertObjectToString(formatRatingUtils.formatRatingOneNumber(foodEntity.getSummaryRating())));
                             foodDomain.setAvatar(foodEntity.getAvatar());
+                            foodDomain.setIsBestSeller(foodEntity.getIsBestSeller());
+                            foodDomain.setTotalBuy(foodEntity.getTotalBuy());
                             foodDomain.setPrice(foodEntity.getPrice().toString());
                             FavouriteEntity favouriteEntity = favouriteRepository.findByUserAppIdAndItemIdAndType(userAppId, foodEntity.getId(), FavouriteType.FOOD.getValue());
                             if (favouriteEntity != null){
@@ -492,6 +520,8 @@ public class FoodServiceImpl {
                     foodDomain.setDiscountPercent(foodEntity.getDiscountPercent());
                     foodDomain.setOriginalPrice(foodEntity.getOriginalPrice());
                     foodDomain.setDistance(mapDistance.get(storeEntity.getId()));
+                    foodDomain.setIsBestSeller(foodEntity.getIsBestSeller());
+                    foodDomain.setTotalBuy(foodEntity.getTotalBuy());
                     listResult.add(foodDomain);
                 }
                 return  listResult;
@@ -541,10 +571,256 @@ public class FoodServiceImpl {
                     foodDomain.setDiscountPercent(foodEntity.getDiscountPercent());
                     foodDomain.setOriginalPrice(foodEntity.getOriginalPrice());
                     foodDomain.setDistance(mapDistance.get(storeEntity.getId()));
+                    foodDomain.setIsBestSeller(foodEntity.getIsBestSeller());
+                    foodDomain.setTotalBuy(foodEntity.getTotalBuy());
 
                     return foodDomain;
                 }
         ).collect(Collectors.toList());
         return  listFood;
+    }
+
+    public ResponseDataAPI getAllUserTransaction(BasicRequest request) {
+        ResponseDataAPI responseDataAPI = new ResponseDataAPI();
+        List<String> listColumnSort = ColumnSortTransactionAdmin.getListColumnSortTransactionAdmin();
+        if (!listColumnSort.contains(request.getColumnSort())){
+            request.setColumnSort("id");
+        }
+        List<String> listTypeSort = ConstantDefine.getTypeSortList();
+        if (!listTypeSort.contains(request.getTypeSort())){
+            request.setTypeSort("DESC");
+        }
+
+        Sort sort = null;
+
+        if (ConstantDefine.SORT_ASC.equals(request.getTypeSort())){
+            sort = Sort.by(Sort.Order.asc(request.getColumnSort()));
+        } else {
+            sort = Sort.by(Sort.Order.desc(request.getColumnSort()));
+        }
+        Pageable pageable = PageRequest.of(request.getOffset(), request.getLimit(), sort);
+
+        String searchValue = request.getValueSearch().trim().toLowerCase(Locale.ROOT);
+
+        Page<TransactionEntity> listTransaction = transactionRepository.getAllTransactionOfUser(searchValue, pageable);
+
+
+        if (listTransaction.getTotalElements() == 0l){
+            return responseDataAPI;
+        }
+
+        responseDataAPI.setTotalRows(listTransaction.getTotalElements());
+
+        List<TransactionDomain> listResult = new ArrayList<>();
+
+        for (TransactionEntity transaction : listTransaction){
+            TransactionDomain domain = new TransactionDomain();
+            domain.setId(StringUtils.convertObjectToString(transaction.getId()));
+            domain.setComment(transaction.getComment());
+            domain.setDistance(transaction.getDistance());
+            domain.setPaymentMethod(transaction.getPaymentMethod());
+            domain.setTotal(transaction.getTotal());
+            domain.setUserAppId(StringUtils.convertObjectToString(transaction.getUserAppId()));
+            UserAppEntity userAppEntity = userAppRepository.findById(transaction.getUserAppId()).orElse(null);
+            if (userAppEntity == null){
+                throw new CustomException("User ko ton tai", "User ko ton tai", HttpStatus.BAD_REQUEST);
+            }
+            domain.setUserAppName(userAppEntity.getUsername());
+            Date date = transaction.getCreatedDate();
+            String createDate = DateTimeUtils.convertDateToStringOrEmpty(date, DateTimeUtils.YYYYMMDDhhmm);
+            domain.setCreateDate(createDate);
+            List<TransactionItemEntity> listItem = transactionItemRepository.findAllByTransactionId(transaction.getId());
+
+            StoreEntity storeEntity = storeRepository.findById(transaction.getStoreId()).orElse(null);
+            if (storeEntity == null) {
+                throw new CustomException("Store ko ton tai", "Store ko ton tai", HttpStatus.BAD_REQUEST);
+            }
+            domain.setStoreId(storeEntity.getId().toString());
+            domain.setStoreName(storeEntity.getName());
+            domain.setAddress(storeEntity.getAddress());
+            domain.setStoreAvatar(storeEntity.getAvatar());
+            List<TransactionItemDomain> listResponseItem = new ArrayList<>();
+            for (TransactionItemEntity transactionItemEntity : listItem){
+                TransactionItemDomain itemDomain = new TransactionItemDomain();
+                itemDomain.setTransactionId(transaction.getId().toString());
+                itemDomain.setFoodId(transactionItemEntity.getFoodId().toString());
+                FoodEntity foodEntity = foodRepository.findById(transactionItemEntity.getFoodId()).orElse(null);
+                if (foodEntity != null){
+                    itemDomain.setAmount(transactionItemEntity.getAmount());
+                    itemDomain.setNote(transactionItemEntity.getNote());
+                    itemDomain.setPrice(transactionItemEntity.getPrice());
+                    itemDomain.setDiscountPercent(transactionItemEntity.getDiscountPercent());
+                    itemDomain.setOriginalPrice(transactionItemEntity.getOriginalPrice());
+                    itemDomain.setFoodAvatar(foodEntity.getAvatar());
+                    itemDomain.setFoodName(foodEntity.getName());
+                } else {
+                    itemDomain.setAmount(0);
+                    itemDomain.setNote("");
+                    itemDomain.setPrice(0l);
+                    itemDomain.setDiscountPercent(0);
+                    itemDomain.setOriginalPrice(0l);
+                    itemDomain.setFoodAvatar("https://media.istockphoto.com/vectors/red-white-stamp-grunge-deleted-vector-id1174096245?s=612x612");
+                    itemDomain.setFoodName("");
+                }
+
+                listResponseItem.add(itemDomain);
+            }
+            domain.setListItem(listResponseItem);
+            listResult.add(domain);
+        }
+        responseDataAPI.setData(listResult);
+        return responseDataAPI;
+    }
+
+    public List<FoodDomain> geListRecommendFoodDetail(String userApp, Long foodIdOriginal){
+        List<FoodDomain> result = new ArrayList<>();
+        FoodEntity foodOriginal = foodRepository.findById(foodIdOriginal).orElse(null);
+        Long userAppId = StringUtils.convertStringToLongOrNull(userApp);
+        if (userAppId == null || foodOriginal == null){
+            throw new CustomException(Error.PARAMETER_INVALID.getMessage()
+                    , Error.PARAMETER_INVALID.getCode(), HttpStatus.BAD_REQUEST);
+        }
+        UserAppEntity userAppEntity = userAppRepository.findById(userAppId).orElse(null);
+        if (userAppEntity == null) {
+            throw new CustomException(Error.PARAMETER_INVALID.getMessage()
+                    , Error.PARAMETER_INVALID.getCode(), HttpStatus.BAD_REQUEST);
+        }
+        Map<Long, Double> mapDistance = calculateDistanceUtils.getDistanceOfAllStores(userAppEntity);
+        try {
+            String linkData = metadataRepository.findByIdAndType(1l, MetadataType.DATA_RECOMMEND_FILE.getValue()).getValue();
+            URL url = new URL(linkData);
+            Scanner s = new Scanner(url.openStream());
+            List<String> listLine = new ArrayList<>();
+            while (s.hasNextLine()){
+                listLine.add(s.nextLine());
+            }
+
+            for (String line : listLine){
+                String[] listItem =line.split("\\|");
+                Long userId = StringUtils.convertObjectToLongOrNull(listItem[0].substring(4));
+                if (userAppId.equals(userId)){
+                    List<String> listFoodStr = new ArrayList<>(Arrays.asList(listItem));
+                    listFoodStr.remove(0);
+                    List<Long> listFoodId = listFoodStr.stream()
+                            .map(t -> StringUtils.convertStringToLongOrNull(t))
+                            .filter(t -> foodRepository.findById(t).orElse(null) != null)
+                            .collect(Collectors.toList());
+                    List<Long> listRatingFoodOfUser = ratingRepository.findAllByUserAppId(userAppId) // list nay ko co lien quan toi food bi xoa
+                            .stream().map(t -> t.getFoodId())
+                            .distinct()
+                            .collect(Collectors.toList());
+                    List<Long> listWillShowFoodId = listFoodId.stream().filter(t -> !listRatingFoodOfUser.contains(t))
+                            .filter(e -> {
+                                FoodEntity foodEntity = foodRepository.findById(e).orElse(null);
+                                if (foodEntity.getFoodTypeId().equals(foodOriginal.getFoodTypeId())){
+                                    return true;
+                                } else {
+                                    return false;
+                                }
+                            })
+                            .limit(10)
+                            .collect(Collectors.toList());
+
+                    System.out.println("Chieu dai list : " + listFoodId.size());
+
+                    //fill missing number
+                    if (listWillShowFoodId.size() < 10){
+                        int countListLength = listWillShowFoodId.size();
+                        for (Long foodId : listFoodId){
+                            FoodEntity foodEntity = foodRepository.findById(foodId).orElse(null);
+                            if (countListLength == 10){
+                                break;
+                            }
+                            if (!listWillShowFoodId.contains(foodId) && foodOriginal.getFoodTypeId().equals(foodEntity.getFoodTypeId())){
+                                listWillShowFoodId.add(foodId);
+                                countListLength ++;
+                            }
+                        }
+
+                    }
+
+                    if (!CollectionUtils.isEmpty(listWillShowFoodId)){
+                        for (Long foodId : listWillShowFoodId){
+                            FoodEntity foodEntity = foodRepository.findById(foodId).orElse(null);
+                            if (foodEntity == null){
+                                throw new CustomException(Error.PARAMETER_INVALID.getMessage()
+                                        , Error.PARAMETER_INVALID.getCode(), HttpStatus.BAD_REQUEST);
+                            }
+                            FoodDomain foodDomain = new FoodDomain();
+                            foodDomain.setId(StringUtils.convertObjectToString(foodEntity.getId()));
+                            foodDomain.setName(foodEntity.getName());
+                            foodDomain.setFoodTypeId(StringUtils.convertObjectToString(foodEntity.getFoodTypeId()));
+                            foodDomain.setStoreId(StringUtils.convertObjectToString(foodEntity.getStoreId()));
+                            StoreEntity storeEntity = storeRepository.findById(foodEntity.getStoreId()).orElse(null);
+                            if (storeEntity == null){
+                                throw new CustomException(Error.PARAMETER_INVALID.getMessage()
+                                        , Error.PARAMETER_INVALID.getCode(), HttpStatus.BAD_REQUEST);
+                            }
+                            foodDomain.setStoreName(storeEntity.getName());
+                            foodDomain.setSummaryRating(StringUtils.convertObjectToString(formatRatingUtils.formatRatingOneNumber(foodEntity.getSummaryRating())));
+                            foodDomain.setAvatar(foodEntity.getAvatar());
+                            foodDomain.setIsBestSeller(foodEntity.getIsBestSeller());
+                            foodDomain.setTotalBuy(foodEntity.getTotalBuy());
+                            foodDomain.setPrice(foodEntity.getPrice().toString());
+                            FavouriteEntity favouriteEntity = favouriteRepository.findByUserAppIdAndItemIdAndType(userAppId, foodEntity.getId(), FavouriteType.FOOD.getValue());
+                            if (favouriteEntity != null){
+                                foodDomain.setIsFavourite("1");
+                            } else {
+                                foodDomain.setIsFavourite("0");
+                            }
+
+                            foodDomain.setDiscountPercent(foodEntity.getDiscountPercent());
+                            foodDomain.setOriginalPrice(foodEntity.getOriginalPrice());
+                            foodDomain.setDistance(mapDistance.get(storeEntity.getId()));
+                            result.add(foodDomain);
+                        }
+                    }
+                }
+            }
+            if (!CollectionUtils.isEmpty(result)){
+                return result;
+            } else {// user ko co trong file
+                List<FoodEntity> listRecommendFood = foodRepository.findAll().stream()
+                        .sorted(Comparator.comparing(FoodEntity::getSummaryRating, Comparator.nullsLast(Comparator.reverseOrder())))
+                        .filter(t -> t.getFoodTypeId().equals(foodOriginal.getFoodTypeId()))
+                        .limit(10)
+                        .collect(Collectors.toList());
+
+                List<FoodDomain> listResult = new ArrayList<>();
+                for (FoodEntity foodEntity : listRecommendFood){
+                    FoodDomain foodDomain = new FoodDomain();
+                    foodDomain.setId(StringUtils.convertObjectToString(foodEntity.getId()));
+                    foodDomain.setName(foodEntity.getName());
+                    foodDomain.setFoodTypeId(StringUtils.convertObjectToString(foodEntity.getFoodTypeId()));
+                    foodDomain.setStoreId(StringUtils.convertObjectToString(foodEntity.getStoreId()));
+                    StoreEntity storeEntity = storeRepository.findById(foodEntity.getStoreId()).orElse(null);
+                    if (storeEntity == null){
+                        throw new CustomException(Error.PARAMETER_INVALID.getMessage()
+                                , Error.PARAMETER_INVALID.getCode(), HttpStatus.BAD_REQUEST);
+                    }
+                    foodDomain.setStoreName(storeEntity.getName());
+                    foodDomain.setSummaryRating(StringUtils.convertObjectToString(formatRatingUtils.formatRatingOneNumber(foodEntity.getSummaryRating())));
+                    foodDomain.setAvatar(foodEntity.getAvatar());
+                    foodDomain.setPrice(foodEntity.getPrice().toString());
+                    FavouriteEntity favouriteEntity = favouriteRepository.findByUserAppIdAndItemIdAndType(userAppId, foodEntity.getId(), FavouriteType.FOOD.getValue());
+                    if (favouriteEntity != null){
+                        foodDomain.setIsFavourite("1");
+                    } else {
+                        foodDomain.setIsFavourite("0");
+                    }
+
+                    foodDomain.setDiscountPercent(foodEntity.getDiscountPercent());
+                    foodDomain.setOriginalPrice(foodEntity.getOriginalPrice());
+                    foodDomain.setDistance(mapDistance.get(storeEntity.getId()));
+                    foodDomain.setIsBestSeller(foodEntity.getIsBestSeller());
+                    foodDomain.setTotalBuy(foodEntity.getTotalBuy());
+                    listResult.add(foodDomain);
+                }
+                return  listResult;
+            }
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+        return new ArrayList<>();
     }
 }

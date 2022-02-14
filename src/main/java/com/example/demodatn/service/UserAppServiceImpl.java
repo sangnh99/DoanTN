@@ -1,9 +1,7 @@
 package com.example.demodatn.service;
 
+import com.example.demodatn.constant.*;
 import com.example.demodatn.constant.Error;
-import com.example.demodatn.constant.IsLocked;
-import com.example.demodatn.constant.PaymentMethod;
-import com.example.demodatn.constant.RoleConstant;
 import com.example.demodatn.domain.*;
 import com.example.demodatn.entity.*;
 import com.example.demodatn.exception.CustomException;
@@ -12,9 +10,14 @@ import com.example.demodatn.util.CalculateDistanceUtils;
 import com.example.demodatn.util.DateTimeUtils;
 import com.example.demodatn.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -24,6 +27,7 @@ import javax.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 @Service
@@ -82,26 +86,30 @@ public class UserAppServiceImpl implements UserAppService {
     }
 
     @Override
-    public void sendEmailVerify(String recipientEmail, String token) throws Exception {
-        MimeMessage message = mailSender.createMimeMessage();
-        MimeMessageHelper helper = new MimeMessageHelper(message);
+    public void sendEmailVerify(String recipientEmail, String token){
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message);
 
-        helper.setFrom("sangnh99@gmail.com", "Sang Nguyen");
-        helper.setTo(recipientEmail);
+            helper.setFrom("sangnh99@gmail.com", "Sang Nguyen");
+            helper.setTo(recipientEmail);
 
-        String subject = "Here's the link to verify your email";
+            String subject = "Here's the link to verify your email";
 
-        String content = "<p>Hello,</p>"
-                + "<p>You have requested to verify your email.</p>"
-                + "<p>This is the code to verify your email:</p>"
-                + "<p>" + token + "</p>";
+            String content = "<p>Hello,</p>"
+                    + "<p>You have requested to verify your email.</p>"
+                    + "<p>This is the code to verify your email:</p>"
+                    + "<p>" + token + "</p>";
 
 
-        helper.setSubject(subject);
+            helper.setSubject(subject);
 
-        helper.setText(content, true);
+            helper.setText(content, true);
 
-        mailSender.send(message);
+            mailSender.send(message);
+        } catch (Exception e){
+            throw new CustomException("Email bạn nhập không tồn tại, vui lòng nhập email khác !", "Email bạn nhập không tồn tại, vui lòng nhập email khác !", HttpStatus.BAD_REQUEST);
+        }
 
     }
 
@@ -130,15 +138,18 @@ public class UserAppServiceImpl implements UserAppService {
     @Override
     public void registerUserApp(RegisterDomain domain, String token) throws Exception {
         if (!domain.getConfirmpassword().equals(domain.getPassword())){
-            throw new Exception("Mat khau xac nhan khong dung!");
+            throw new CustomException("Mật khẩu xác nhận không đúng", "Mat khau xac nhan khong dung!", HttpStatus.BAD_REQUEST);
         }
         BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
         String encodedPassword = passwordEncoder.encode(domain.getPassword());
         UserAppEntity userApp1 = userAppRepository.findByEmail(domain.getEmail());
         UserAppEntity userApp2 = userAppRepository.findByUsername(domain.getUsername()).orElse(null);
 
-        if (userApp1 != null || userApp2 != null){
-            throw new Exception("Username hoac email da ton tai");
+        if (userApp1 != null){
+            throw new CustomException("Email đã tồn tại, vui lòng nhập email khác !", "Username hoac email da ton tai", HttpStatus.BAD_REQUEST);
+        }
+        if (userApp2 != null){
+            throw new CustomException("Tên đăng nhập đã tồn tại, vui lòng nhập tên đăng nhập khác !", "Username hoac email da ton tai", HttpStatus.BAD_REQUEST);
         }
 
         UserAppEntity userAppEntity = new UserAppEntity();
@@ -150,6 +161,8 @@ public class UserAppServiceImpl implements UserAppService {
         userAppEntity.setVerifyEmailToken(token);
         userAppEntity.setIsLocked(IsLocked.TRUE.getValue());
         UserAppEntity user = userAppRepository.save(userAppEntity);
+
+        sendEmailVerify(domain.getEmail(), token);
     }
 
     @Override
@@ -159,8 +172,8 @@ public class UserAppServiceImpl implements UserAppService {
             throw new Exception("Email khong ton tai");
         }
         if (!domain.getToken().equals(userAppEntity.getVerifyEmailToken())){
-            userAppEntity.setIsDeleted(1);
-            userAppRepository.save(userAppEntity);
+//            userAppEntity.setIsDeleted(1);
+//            userAppRepository.save(userAppEntity);
             throw new Exception("Ma xac thuc khong dung");
         }
 
@@ -236,7 +249,7 @@ public class UserAppServiceImpl implements UserAppService {
         if (userAppEntity == null){
             throw new CustomException("Id cua user bi sai", "wrong user id", HttpStatus.BAD_REQUEST);
         }
-        List<TransactionEntity> listTransaction = transactionRepository.findAllByUserAppIdOrderByCreatedDateDesc(userAppId);
+        List<TransactionEntity> listTransaction = transactionRepository.findAllByUserAppIdOrderByIdDesc(userAppId);
         listTransaction = listTransaction.stream().limit(10).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(listTransaction)){
             return new ArrayList<>();
@@ -256,7 +269,7 @@ public class UserAppServiceImpl implements UserAppService {
             domain.setCreateDate(createDate);
             List<TransactionItemEntity> listItem = transactionItemRepository.findAllByTransactionId(transaction.getId());
 
-            StoreEntity storeEntity = storeRepository.findById(foodRepository.getById(listItem.get(0).getFoodId()).getStoreId()).orElse(null);
+            StoreEntity storeEntity = storeRepository.findById(transaction.getStoreId()).orElse(null);
             domain.setStoreId(storeEntity.getId().toString());
             domain.setStoreName(storeEntity.getName());
             domain.setAddress(storeEntity.getAddress());
@@ -267,13 +280,25 @@ public class UserAppServiceImpl implements UserAppService {
                 itemDomain.setTransactionId(transaction.getId().toString());
                 itemDomain.setFoodId(transactionItemEntity.getFoodId().toString());
                 FoodEntity foodEntity = foodRepository.findById(transactionItemEntity.getFoodId()).orElse(null);
-                itemDomain.setAmount(transactionItemEntity.getAmount());
-                itemDomain.setNote(transactionItemEntity.getNote());
-                itemDomain.setPrice(transactionItemEntity.getPrice());
-                itemDomain.setDiscountPercent(transactionItemEntity.getDiscountPercent());
-                itemDomain.setOriginalPrice(transactionItemEntity.getOriginalPrice());
-                itemDomain.setFoodAvatar(foodEntity.getAvatar());
-                itemDomain.setFoodName(foodEntity.getName());
+                if (foodEntity != null){
+                    itemDomain.setAmount(transactionItemEntity.getAmount());
+                    itemDomain.setNote(transactionItemEntity.getNote());
+                    itemDomain.setPrice(transactionItemEntity.getPrice());
+                    itemDomain.setDiscountPercent(transactionItemEntity.getDiscountPercent());
+                    itemDomain.setOriginalPrice(transactionItemEntity.getOriginalPrice());
+                    itemDomain.setFoodAvatar(foodEntity.getAvatar());
+                    itemDomain.setFoodName(foodEntity.getName());
+                } else {
+                    itemDomain.setAmount(0);
+                    itemDomain.setNote("");
+                    itemDomain.setPrice(0l);
+                    itemDomain.setDiscountPercent(0);
+                    itemDomain.setOriginalPrice(0l);
+                    itemDomain.setFoodAvatar("https://media.istockphoto.com/vectors/red-white-stamp-grunge-deleted-vector-id1174096245?s=612x612");
+                    itemDomain.setFoodName("");
+                }
+
+
                 listResponseItem.add(itemDomain);
             }
             domain.setListItem(listResponseItem);
@@ -306,11 +331,13 @@ public class UserAppServiceImpl implements UserAppService {
         transactionEntity.setUserAppId(userAppId);
         transactionEntity.setPaymentMethod(PaymentMethod.DIRECT.getName());
         transactionEntity.setDistance(distance);
+        transactionEntity.setStoreId(storeEntity.getId());
         transactionEntity.setDeliveryAddressId(userAppRepository.findById(userAppId).orElse(null).getActiveAddressId());
 
         transactionEntity = transactionRepository.save(transactionEntity);
 
         List<TransactionItemEntity> listTransactionItem = new ArrayList<>();
+        List<FoodEntity> listFoodBuy = new ArrayList<>();
         for (CartEntity cartEntity : listCartOfUser){
             //get total price
             totalPrice += cartEntity.getPrice()*cartEntity.getAmount();
@@ -319,6 +346,14 @@ public class UserAppServiceImpl implements UserAppService {
             TransactionItemEntity transactionItemEntity = new TransactionItemEntity();
             transactionItemEntity.setTransactionId(transactionEntity.getId());
             FoodEntity foodEntityItem = foodRepository.findById(cartEntity.getFoodId()).orElse(null);
+            if (foodEntityItem == null){
+                throw new CustomException("Food id ko ton tai", "Food id ko ton tai", HttpStatus.BAD_REQUEST);
+            }
+            if (foodEntityItem.getTotalBuy() == null){
+                foodEntityItem.setTotalBuy(0);
+            }
+            foodEntityItem.setTotalBuy(foodEntityItem.getTotalBuy() + cartEntity.getAmount());
+            listFoodBuy.add(foodEntityItem);
             transactionItemEntity.setFoodId(foodEntityItem.getId());
             transactionItemEntity.setAmount(cartEntity.getAmount());
             transactionItemEntity.setPrice(foodEntityItem.getPrice());
@@ -334,11 +369,96 @@ public class UserAppServiceImpl implements UserAppService {
             throw new CustomException("Gia tri don hang bi tinh sai"
                     , "Gia tri don hang bi tinh sai", HttpStatus.BAD_REQUEST);
         }
+        foodRepository.saveAll(listFoodBuy);
         transactionEntity.setTotal(totalPrice);
         transactionRepository.save(transactionEntity);
         transactionItemRepository.saveAll(listTransactionItem);
         cartRepository.saveAll(listCartOfUser);
 
         return "success";
+    }
+
+    public ResponseDataAPI getAllUsersAdmin(String valueSearch, Integer offset) {
+        ResponseDataAPI responseDataAPI = new ResponseDataAPI();
+
+        Sort sort = Sort.by(Sort.Order.desc("id"));
+
+        Pageable pageable = PageRequest.of(offset, 8, sort);
+
+        String searchValue = valueSearch.trim().toLowerCase(Locale.ROOT);
+
+        Page<UserAppEntity> userAppPage = userAppRepository.getListUserBySearchValue(searchValue, pageable);
+
+        if (userAppPage.getTotalElements() == 0l){
+            return responseDataAPI;
+        }
+
+        List<UserInfoDomain> listResult = userAppPage.stream().map(userAppEntity -> {
+            UserInfoDomain domain = new UserInfoDomain();
+            domain.setId(StringUtils.convertObjectToString(userAppEntity.getId()));
+            domain.setUsername(userAppEntity.getUsername());
+            domain.setFullName(userAppEntity.getFullName());
+            domain.setPhone(userAppEntity.getPhone());
+            domain.setAvatar(userAppEntity.getAvatar());
+            domain.setAddress(userAppEntity.getAddress());
+            domain.setEmail(userAppEntity.getEmail());
+            domain.setIsLocked(userAppEntity.getIsLocked());
+            domain.setCreatedDate(DateTimeUtils.convertDateToStringOrEmpty(userAppEntity.getCreatedDate(), DateTimeUtils.YYYYMMDDhhmm));
+
+            return domain;
+        }).collect(Collectors.toList());
+        responseDataAPI.setData(listResult);
+        responseDataAPI.setTotalRows(userAppPage.getTotalElements());
+        return responseDataAPI;
+    }
+
+    public void lockUser(UserAppIdDomain domain) {
+        Long userAppId = StringUtils.convertStringToLongOrNull(domain.getUserAppId());
+
+        UserAppEntity userAppEntity = userAppRepository.findById(userAppId).orElse(null);
+
+        if (userAppEntity == null || userAppEntity.getIsLocked().equals(1)){
+            throw new CustomException("User ID bi sai", "User ID bi sai", HttpStatus.BAD_REQUEST);
+        }
+
+        userAppEntity.setIsLocked(1);
+
+        userAppRepository.save(userAppEntity);
+    }
+
+    public void unlockUser(UserAppIdDomain domain) {
+        Long userAppId = StringUtils.convertStringToLongOrNull(domain.getUserAppId());
+
+        UserAppEntity userAppEntity = userAppRepository.findById(userAppId).orElse(null);
+
+        if (userAppEntity == null || userAppEntity.getIsLocked().equals(0)){
+            throw new CustomException("User ID bi sai", "User ID bi sai", HttpStatus.BAD_REQUEST);
+        }
+
+        userAppEntity.setIsLocked(0);
+
+        userAppRepository.save(userAppEntity);
+    }
+
+    public void changePasswordAdmin(ChangePasswordAdminDomain domain) {
+        Long adminId = StringUtils.convertObjectToLongOrNull(domain.getId());
+        if (adminId == null){
+            throw new CustomException("Admin ID bi sai", "Admin ID bi sai", HttpStatus.BAD_REQUEST);
+        }
+        UserAppEntity adminEntity = userAppRepository.findById(adminId).orElse(null);
+
+        if (adminEntity == null){
+            throw new CustomException("Admin ID bi sai", "Admin ID bi sai", HttpStatus.BAD_REQUEST);
+        }
+
+        if (!BCrypt.checkpw(domain.getOldPassword(), adminEntity.getPassword())){
+            throw new CustomException("Mat khau cu bi sai", "Mat khau cu bi sai", HttpStatus.BAD_REQUEST);
+        }
+
+        BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+        String encodedPassword = passwordEncoder.encode(domain.getNewPassword());
+
+        adminEntity.setPassword(encodedPassword);
+        userAppRepository.save(adminEntity);
     }
 }

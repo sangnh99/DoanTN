@@ -1,6 +1,7 @@
 package com.example.demodatn.repository;
 import com.example.demodatn.entity.RatingEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
@@ -15,4 +16,8 @@ public interface RatingRepository extends JpaRepository<RatingEntity, Long> {
     List<RatingEntity> getListRatingOfStore(Long storeId);
 
     List<RatingEntity> findAllByUserAppId(Long userAppId);
+
+    @Modifying
+    @Query(value = "update RatingEntity set isDeleted = 1 where foodId = ?1")
+    void deleteAllRatingByFoodId(Long foodId);
 }

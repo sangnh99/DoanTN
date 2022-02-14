@@ -144,6 +144,8 @@ public class FavouriteServiceImpl {
                     FoodDomain foodDomain = new FoodDomain();
                     foodDomain.setId(StringUtils.convertObjectToString(foodEntity.getId()));
                     foodDomain.setName(foodEntity.getName());
+                    foodDomain.setIsBestSeller(foodEntity.getIsBestSeller());
+                    foodDomain.setTotalBuy(foodDomain.getTotalBuy());
                     foodDomain.setFoodTypeId(StringUtils.convertObjectToString(foodEntity.getFoodTypeId()));
                     foodDomain.setStoreId(StringUtils.convertObjectToString(foodEntity.getStoreId()));
                     foodDomain.setStoreName(storeRepository.findById(foodEntity.getStoreId()).orElse(null).getName());

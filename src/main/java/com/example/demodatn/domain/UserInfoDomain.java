@@ -12,6 +12,8 @@ public class UserInfoDomain {
     private String address;
     private String avatar;
     private String email;
+    private Integer isLocked;
+    private String createdDate;
 
     public String getId() {
         return id;
@@ -67,5 +69,21 @@ public class UserInfoDomain {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public Integer getIsLocked() {
+        return isLocked;
+    }
+
+    public void setIsLocked(Integer isLocked) {
+        this.isLocked = isLocked;
+    }
+
+    public String getCreatedDate() {
+        return createdDate;
+    }
+
+    public void setCreatedDate(String createdDate) {
+        this.createdDate = createdDate;
     }
 }

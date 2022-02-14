@@ -11,6 +11,7 @@ import com.example.demodatn.exception.CustomException;
 import com.example.demodatn.repository.*;
 import com.example.demodatn.util.CalculateDistanceUtils;
 import com.example.demodatn.util.StringUtils;
+import org.hibernate.Transaction;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -51,6 +52,12 @@ public class ItemBasedFilteringServiceImpl {
     @Autowired
     private MetadataRepository metadataRepository;
 
+    @Autowired
+    private TransactionRepository transactionRepository;
+
+    @Autowired
+    private TransactionItemRepository transactionItemRepository;
+
 
     public Map<Long, HashMap<Long, Double>> initializeData() {// user - item
         Map<Long, HashMap<Long, Double>> data = new HashMap<>();
@@ -73,7 +80,8 @@ public class ItemBasedFilteringServiceImpl {
         return data;
     }
 
-//    @Scheduled(fixedRate = 172800000)
+//    @Scheduled(fixedRate = 272800000)
+//    need
     public void setSummaryRating(){
         List<FoodEntity> listFood = foodRepository.findAll();
         List<FoodEntity> listResultFood = new ArrayList<>();
@@ -105,8 +113,39 @@ public class ItemBasedFilteringServiceImpl {
 
     }
 
+//    @Scheduled(fixedRate = 672800000)
+    public void findInfoForAdminPage(){
+        Long total = transactionRepository.findAll()
+                .stream()
+                .map(t -> t.getTotal())
+                .reduce(0l, (t1, t2) -> (t1 + t2));
+        MetadataEntity metadataEntity = metadataRepository.findById(1l).orElse(null);
+        if (metadataEntity == null){
+            throw new CustomException("tinh doanh thu cua thang bi sai", "tinh doanh thu cua thang bi sai", HttpStatus.BAD_REQUEST);
+        }
+        metadataEntity.setTotalIncome(total);
+        metadataEntity.setTotalFood(foodRepository.findAll().size());
+        metadataRepository.save(metadataEntity);
+    }
 
 //    @Scheduled(fixedRate = 172800000)
+    public void setStoreIdForTransaction(){
+        List<TransactionEntity> listTransaction = transactionRepository.findAll();
+        List<TransactionEntity> lisResult = new ArrayList<>();
+        for (TransactionEntity entity : listTransaction){
+            System.out.println("Transaction :" + entity.getId());
+            TransactionItemEntity transactionItemEntity = transactionItemRepository.findAllByTransactionId(entity.getId()).stream().limit(1).collect(Collectors.toList()).get(0);
+            FoodEntity foodEntity = foodRepository.findById(transactionItemEntity.getFoodId()).orElse(null);
+            if (foodEntity == null){
+                throw new CustomException("Food bi sai", "Food bi sai", HttpStatus.BAD_REQUEST);
+            }
+            entity.setStoreId(foodEntity.getStoreId());
+            lisResult.add(entity);
+        }
+        transactionRepository.saveAll(lisResult);
+    }
+
+//    @Scheduled(fixedRate = 572800000)
     public void buildDifferencesMatrixAndPredict() {
         Map<Long, HashMap<Long, Double>> data = initializeData();
         Map<Long, Map<Long, Double>> diff = new HashMap<>();

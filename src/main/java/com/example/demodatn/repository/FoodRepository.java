@@ -24,4 +24,7 @@ public interface FoodRepository extends JpaRepository<FoodEntity, Long> {
 
     @Query(value = "select f from FoodEntity f where f.discountPercent is not null order by f.discountPercent desc ")
     List<FoodEntity> getListFoodOnSale();
+
+    @Query(value = "select f from FoodEntity f where f.storeId = ?1 and lower(f.name) like %?2%")
+    Page<FoodEntity> getAllFoodOfStoreAdmin(Long storeId, String searchValue, Pageable pageable);
 }

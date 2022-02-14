@@ -2,6 +2,8 @@ package com.example.demodatn.repository;
 
 
 import com.example.demodatn.entity.UserAppEntity;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -27,4 +29,10 @@ public interface UserAppRepository extends JpaRepository<UserAppEntity, Long> {
 
     @Query(value = "select u from UserAppEntity u where u.isDeleted <> 1 and u.isLocked <> 1")
     List<UserAppEntity> getListUserActive();
+
+    @Query(value = "select u from UserAppEntity  u where lower(u.username) like %?1% and u.id <> 18")
+    Page<UserAppEntity> getListUserBySearchValue(String valueSearch, Pageable pageable);
+
+    @Query(value = "select u from UserAppEntity u order by u.createdDate asc ")
+    List<UserAppEntity> getListUserAppByCreateDate();
 }

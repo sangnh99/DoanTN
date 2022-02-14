@@ -31,6 +31,10 @@ public class FoodEntity extends BaseEntity{
     private Integer discountPercent;
     @Column(name = "ORIGINAL_PRICE")
     private Long originalPrice;
+    @Column(name = "TOTAL_BUY")
+    private Integer totalBuy;
+    @Column(name = "IS_BEST_SELLER")
+    private Integer isBestSeller;
 
 
     public Long getId() {
@@ -111,5 +115,21 @@ public class FoodEntity extends BaseEntity{
 
     public void setOriginalPrice(Long originalPrice) {
         this.originalPrice = originalPrice;
+    }
+
+    public Integer getTotalBuy() {
+        return totalBuy;
+    }
+
+    public void setTotalBuy(Integer totalBuy) {
+        this.totalBuy = totalBuy;
+    }
+
+    public Integer getIsBestSeller() {
+        return isBestSeller;
+    }
+
+    public void setIsBestSeller(Integer isBestSeller) {
+        this.isBestSeller = isBestSeller;
     }
 }

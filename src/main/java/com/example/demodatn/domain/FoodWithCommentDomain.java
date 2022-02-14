@@ -23,6 +23,9 @@ public class FoodWithCommentDomain {
     private Double distance;
     private String note;
     private String storeAddress;
+    private Integer totalBuy;
+    private Integer isBestSeller;
+    private List<FoodDomain> listRecommendSameFood;
 
     public String getFoodId() {
         return foodId;
@@ -150,5 +153,29 @@ public class FoodWithCommentDomain {
 
     public void setStoreAddress(String storeAddress) {
         this.storeAddress = storeAddress;
+    }
+
+    public Integer getTotalBuy() {
+        return totalBuy;
+    }
+
+    public void setTotalBuy(Integer totalBuy) {
+        this.totalBuy = totalBuy;
+    }
+
+    public Integer getIsBestSeller() {
+        return isBestSeller;
+    }
+
+    public void setIsBestSeller(Integer isBestSeller) {
+        this.isBestSeller = isBestSeller;
+    }
+
+    public List<FoodDomain> getListRecommendSameFood() {
+        return listRecommendSameFood;
+    }
+
+    public void setListRecommendSameFood(List<FoodDomain> listRecommendSameFood) {
+        this.listRecommendSameFood = listRecommendSameFood;
     }
 }

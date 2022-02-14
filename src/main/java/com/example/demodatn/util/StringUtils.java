@@ -347,6 +347,12 @@ public final class StringUtils {
 
     }
 
+    public static String convertDateToStringFormatMMyyyy(Date input) {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("MM-yyyy");
+        return input == null ? null : dateFormat.format(input).toString();
+
+    }
+
     public static boolean isEmpty(Object str) {
         return (str == null || "".equals(str));
     }
