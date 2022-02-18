@@ -62,7 +62,7 @@ public class CronJobsServiceImpl {
         foodRepository.saveAll(listSave);
     }
 
-    @Scheduled(fixedRate = 176400000)
+    @Scheduled(fixedRate = 276400000)
 //    need
     public void findTopTenBestSeller(){
         List<FoodEntity> listFood = foodRepository.findAll();

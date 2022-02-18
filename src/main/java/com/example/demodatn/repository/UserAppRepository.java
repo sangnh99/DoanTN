@@ -35,4 +35,6 @@ public interface UserAppRepository extends JpaRepository<UserAppEntity, Long> {
 
     @Query(value = "select u from UserAppEntity u order by u.createdDate asc ")
     List<UserAppEntity> getListUserAppByCreateDate();
+
+    UserAppEntity findByEmailAndIsLocked(String email, Integer isLocked);
 }

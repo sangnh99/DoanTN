@@ -14,6 +14,7 @@ import com.example.demodatn.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
@@ -90,9 +91,21 @@ public class FoodController {
         return ResponseEntity.ok(ResponseDataAPI.builder().data(foodService.geListNearFood(userAppId)).build());
     }
 
+//    @PostMapping("/{food_id}/add-rating")
+//    public ResponseEntity<ResponseDataAPI> addNewRatingForFood(@PathVariable("food_id") String food, @RequestBody AddRatingDomain domain){
+//        return ResponseEntity.ok(ResponseDataAPI.builder().data(foodService.addNewRatingForFood(food, domain)).build());
+//    }
     @PostMapping("/{food_id}/add-rating")
-    public ResponseEntity<ResponseDataAPI> addNewRatingForFood(@PathVariable("food_id") String food, @RequestBody AddRatingDomain domain){
-        return ResponseEntity.ok(ResponseDataAPI.builder().data(foodService.addNewRatingForFood(food, domain)).build());
+    public ResponseEntity<ResponseDataAPI> addNewRatingForFood(@RequestParam("files") MultipartFile[] files,
+                                                               @RequestParam("user_app_id") String userAppId,
+                                                               @RequestParam("rating") String rating,
+                                                               @RequestParam("comment") String comment,
+                                                               @RequestParam("food_id") String food) {
+        AddRatingDomain domain = new AddRatingDomain();
+        domain.setUserAppId(userAppId);
+        domain.setRating(rating);
+        domain.setComment(comment);
+        return ResponseEntity.ok(ResponseDataAPI.builder().data(foodService.addNewRatingForFood(food, domain, files)).build());
     }
 
     @GetMapping("/get-list-recommend-food")

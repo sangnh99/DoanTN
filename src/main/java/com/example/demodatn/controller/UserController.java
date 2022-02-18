@@ -32,15 +32,6 @@ import java.util.stream.Collectors;
 @RequestMapping("/user")
 public class UserController {
 
-//    @GetMapping("/profile")
-//    public ResponseEntity<?> getProfileUser(){
-//        UserAppEntity userAppEntity = new UserAppEntity();
-//        userAppEntity.setPassword("aaa");
-//        userAppEntity.setUsername("bbbb");
-//        System.out.println("aaaaaaaaaaaaaaaaaaaaaaaaa");
-//        return  ResponseEntity.ok(userAppEntity);
-//    }
-
     @Autowired
     private UserAppRepository userAppRepository;
 
@@ -130,11 +121,6 @@ public class UserController {
             }
             cartRepository.save(cartEntity);
         }
-//        List<CartEntity> cartEntityList = cartRepository.findAllByUserAppId(userAppId);
-//        long totalPrice = 0l;
-//        if (!CollectionUtils.isEmpty(cartEntityList)){
-//            totalPrice = cartEntityList.stream().reduce(0l, (a, b) -> a + b.getPrice()*b.getAmount(), Long::sum);
-//        }
         return ResponseEntity.ok(ResponseDataAPI.builder().build());
     }
 

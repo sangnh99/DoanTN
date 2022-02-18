@@ -36,6 +36,8 @@ public class UserAppEntity extends BaseEntity{
     private Long activeAddressId;
     @Column(name = "IS_LOCKED")
     private Integer isLocked;
+    @Column(name = "FORGOT_PASSWORD_TOKEN")
+    private String forgotPasswordToken;
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @JoinColumn(name = "USER_ID", insertable = false, updatable = false)
@@ -145,5 +147,13 @@ public class UserAppEntity extends BaseEntity{
 
     public void setIsLocked(Integer isLocked) {
         this.isLocked = isLocked;
+    }
+
+    public String getForgotPasswordToken() {
+        return forgotPasswordToken;
+    }
+
+    public void setForgotPasswordToken(String forgotPasswordToken) {
+        this.forgotPasswordToken = forgotPasswordToken;
     }
 }

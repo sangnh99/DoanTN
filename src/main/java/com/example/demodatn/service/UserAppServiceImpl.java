@@ -124,6 +124,17 @@ public class UserAppServiceImpl implements UserAppService {
         }
     }
 
+    public UserAppEntity updateForgotPasswordToken(String token, String email){
+        UserAppEntity userApp = userAppRepository.findByEmailAndIsLocked(email, 0);
+        if (userApp != null) {
+            userApp.setForgotPasswordToken(token);
+            userAppRepository.save(userApp);
+        } else {
+            throw new CustomException("Không tìm thấy user nào với email  " + email, "Could not find any customer with the email " + email, HttpStatus.BAD_REQUEST);
+        }
+        return userApp;
+    }
+
     @Override
     public void updatePassword(UserAppEntity userApp, String newPassword) {
         BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();

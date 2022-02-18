@@ -10,6 +10,7 @@ public interface UserAppService {
     public void sendEmail(String recipientEmail, String link) throws Exception;
     public void sendEmailVerify(String recipientEmail, String token) throws Exception;
     public void updateResetPasswordToken(String token, String email) throws Exception;
+    public UserAppEntity updateForgotPasswordToken(String token, String email);
     public void updatePassword(UserAppEntity userApp, String newPassword);
     public void registerUserApp(RegisterDomain domain, String token) throws Exception;
     public void validateAccountByEmail(ValidateEmailDomain domain) throws Exception;

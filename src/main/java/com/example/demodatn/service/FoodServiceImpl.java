@@ -1,5 +1,7 @@
 package com.example.demodatn.service;
 
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
 import com.example.demodatn.constant.*;
 import com.example.demodatn.constant.Error;
 import com.example.demodatn.domain.*;
@@ -19,8 +21,14 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -68,6 +76,9 @@ public class FoodServiceImpl {
 
     @Autowired
     private TransactionRepository transactionRepository;
+
+    @Autowired
+    private RatingImageRepository ratingImageRepository;
 
     public List<FoodDomain> getListFoodByFoodType(String userApp, String foodTypeStr, BasicRequest request){
         Long userAppId = StringUtils.convertStringToLongOrNull(userApp);
@@ -170,17 +181,28 @@ public class FoodServiceImpl {
         domain.setNumberOfVote(StringUtils.convertObjectToString(listRatingIds.size()));
         if (!CollectionUtils.isEmpty(listRatingIds)){
             domain.setNumberOfVote(StringUtils.convertObjectToString(listRatingIds.size()));
-            listComments = listRatingIds.stream().map(ratingEntity -> {
+            listComments = listRatingIds.stream().filter(entity -> !StringUtils.isEmpty(entity.getComment()))
+                    .sorted((t1, t2) -> t2.getCreatedDate().compareTo(t1.getCreatedDate()))
+                    .map(ratingEntity -> {
                 CommentDomain commentDomain = new CommentDomain();
                 UserAppEntity userAppEntity = userAppRepository.getById(ratingEntity.getUserAppId());
                 commentDomain.setId(StringUtils.convertObjectToString(ratingEntity.getId()));
                 commentDomain.setUserAppName(userAppEntity.getUsername());
                 commentDomain.setRating(StringUtils.convertObjectToString(ratingEntity.getRating()));
                 commentDomain.setComment(ratingEntity.getComment());
+                commentDomain.setUserAvatar(userAppEntity.getAvatar());
+                String createDate = DateTimeUtils.convertDateToStringOrEmpty(ratingEntity.getCreatedDate(), DateTimeUtils.YYYYMMDDhhmm);
+                commentDomain.setCreatedDate(createDate);
+                List<RatingImageEntity> listImageRating = ratingImageRepository.findByRatingId(ratingEntity.getId());
+                if (CollectionUtils.isEmpty(listImageRating)){
+                    commentDomain.setListImage(new ArrayList<>());
+                } else {
+                    commentDomain.setListImage(listImageRating.stream().map(a -> a.getImageUrl()).collect(Collectors.toList()));
+                }
                 commentDomain.setLikeNumber(ratingEntity.getLikeNumber() == null ? "0" : StringUtils.convertObjectToString(ratingEntity.getLikeNumber()));
                 commentDomain.setDislikeNumber(ratingEntity.getDislikeNumber() == null ? "0" : StringUtils.convertObjectToString(ratingEntity.getDislikeNumber()));
                 return commentDomain;
-            }).filter(entity -> !StringUtils.isEmpty(entity.getComment())).collect(Collectors.toList());
+            }).collect(Collectors.toList());
         }
         domain.setListComments(listComments);
         return domain;
@@ -365,7 +387,7 @@ public class FoodServiceImpl {
         return listResult;
     }
 
-    public String addNewRatingForFood(String food, AddRatingDomain domain) {
+    public String addNewRatingForFood(String food, AddRatingDomain domain, MultipartFile[] files) {
         String success = "";
         Long foodId = StringUtils.convertStringToLongOrNull(food);
         Long userAppId = StringUtils.convertStringToLongOrNull(domain.getUserAppId());
@@ -384,8 +406,34 @@ public class FoodServiceImpl {
         ratingEntity.setDislikeNumber(0l);
         ratingEntity.setLikeNumber(0l);
 
-        ratingRepository.save(ratingEntity);
+        ratingEntity = ratingRepository.save(ratingEntity);
 
+        Cloudinary cloudinary = new Cloudinary(ObjectUtils.asMap(
+                "cloud_name", "djifhw3lo",
+                "api_key", "992726224781494",
+                "api_secret", "Tol4roEhAhgOJ3NaNsnAyWDDrD0",
+                "secure", true));
+        List<RatingImageEntity> listRatingImage = new ArrayList<>();
+        RatingEntity finalRatingEntity = ratingEntity;
+        Arrays.asList(files).stream().forEach(file -> {
+            Path filepath = Path.of("imageupload.jpg");
+
+            String imageUrl = "";
+            try (OutputStream os = Files.newOutputStream(filepath)) {
+                os.write(file.getBytes());
+                Map uploadResult = cloudinary.uploader().upload(new File("imageupload.jpg"), ObjectUtils.emptyMap());
+                System.out.println("upload moi : " + uploadResult.get("url"));
+                imageUrl = (String) uploadResult.get("url");
+                RatingImageEntity ratingImageEntity = new RatingImageEntity();
+                ratingImageEntity.setRatingId(finalRatingEntity.getId());
+                ratingImageEntity.setImageUrl(imageUrl);
+                listRatingImage.add(ratingImageEntity);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
+
+        ratingImageRepository.saveAll(listRatingImage);
         success = "success";
         return success;
     }
@@ -703,6 +751,7 @@ public class FoodServiceImpl {
                     listFoodStr.remove(0);
                     List<Long> listFoodId = listFoodStr.stream()
                             .map(t -> StringUtils.convertStringToLongOrNull(t))
+                            .filter(a -> !foodIdOriginal.equals(a))
                             .filter(t -> foodRepository.findById(t).orElse(null) != null)
                             .collect(Collectors.toList());
                     List<Long> listRatingFoodOfUser = ratingRepository.findAllByUserAppId(userAppId) // list nay ko co lien quan toi food bi xoa
@@ -783,6 +832,7 @@ public class FoodServiceImpl {
                 List<FoodEntity> listRecommendFood = foodRepository.findAll().stream()
                         .sorted(Comparator.comparing(FoodEntity::getSummaryRating, Comparator.nullsLast(Comparator.reverseOrder())))
                         .filter(t -> t.getFoodTypeId().equals(foodOriginal.getFoodTypeId()))
+                        .filter(a -> !foodIdOriginal.equals(a.getId()))
                         .limit(10)
                         .collect(Collectors.toList());
 
