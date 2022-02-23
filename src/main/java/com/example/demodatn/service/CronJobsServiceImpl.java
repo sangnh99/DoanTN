@@ -1,6 +1,8 @@
 package com.example.demodatn.service;
 
+import com.example.demodatn.entity.DeliveryAddressEntity;
 import com.example.demodatn.entity.FoodEntity;
+import com.example.demodatn.entity.TransactionEntity;
 import com.example.demodatn.entity.TransactionItemEntity;
 import com.example.demodatn.repository.*;
 import com.example.demodatn.util.CalculateDistanceUtils;
@@ -42,6 +44,9 @@ public class CronJobsServiceImpl {
     @Autowired
     private TransactionItemRepository transactionItemRepository;
 
+    @Autowired
+    private DeliveryAddressRepository deliveryAddressRepository;
+
 //    @Scheduled(fixedRate = 20000000)
 //    no need
     public void setTotalBuyForFood(){
@@ -60,6 +65,44 @@ public class CronJobsServiceImpl {
             listSave.add(foodEntity);
         }
         foodRepository.saveAll(listSave);
+    }
+
+//    @Scheduled(fixedRate = 20000000)
+//    no need
+    public void setDeliveryAddressForTransaction(){
+        List<TransactionEntity> listTransaction = transactionRepository.findAll();
+        List<TransactionEntity> listSave = new ArrayList<>();
+        for (TransactionEntity transactionEntity : listTransaction){
+            DeliveryAddressEntity deliveryAddressEntity = deliveryAddressRepository.findById(transactionEntity.getDeliveryAddressId()).orElse(null);
+            transactionEntity.setDeliveryAddress(deliveryAddressEntity.getAddress());
+            transactionEntity.setDeliveryLatitude(deliveryAddressEntity.getLatitude());
+            transactionEntity.setDeliveryLongitude(deliveryAddressEntity.getLongitude());
+            listSave.add(transactionEntity);
+        }
+        transactionRepository.saveAll(listSave);
+    }
+
+//       @Scheduled(fixedRate = 20000000)
+//    no need
+    public void setCompleteTransaction(){
+        List<TransactionEntity> listTransaction = transactionRepository.findAll();
+        List<TransactionEntity> listSave = new ArrayList<>();
+        for (TransactionEntity transactionEntity : listTransaction){
+            transactionEntity.setStatus(4);
+            transactionEntity.setShipperId(30l);
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTime(transactionEntity.getCreatedDate());
+            calendar.add(Calendar.MINUTE, 3);
+            transactionEntity.setTimeStart(calendar.getTime());
+
+            Calendar calendar1 = Calendar.getInstance();
+            calendar1.setTime(transactionEntity.getCreatedDate());
+            calendar1.add(Calendar.MINUTE, 30);
+            transactionEntity.setTimeEnd(calendar1.getTime());
+
+            listSave.add(transactionEntity);
+        }
+        transactionRepository.saveAll(listSave);
     }
 
     @Scheduled(fixedRate = 276400000)
@@ -84,4 +127,6 @@ public class CronJobsServiceImpl {
         foodRepository.saveAll(listResult);
 
     }
+
+
 }

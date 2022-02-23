@@ -24,10 +24,7 @@ import org.springframework.util.CollectionUtils;
 
 import javax.mail.internet.MimeMessage;
 import javax.transaction.Transactional;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -59,6 +56,9 @@ public class UserAppServiceImpl implements UserAppService {
 
     @Autowired
     private TransactionItemRepository transactionItemRepository;
+
+    @Autowired
+    private DeliveryAddressRepository deliveryAddressRepository;
 
     @Override
     public void sendEmail(String recipientEmail, String link) throws Exception {
@@ -266,6 +266,12 @@ public class UserAppServiceImpl implements UserAppService {
             return new ArrayList<>();
         }
 
+        Map<Integer, String> shipperStatusMap = new HashMap<>();
+        shipperStatusMap.put(ShipperStatus.DANG_TIM_TAI_XE.getNumber(), ShipperStatus.DANG_TIM_TAI_XE.getName());
+        shipperStatusMap.put(ShipperStatus.DANG_CHO_LAY_HANG.getNumber(), ShipperStatus.DANG_CHO_LAY_HANG.getName());
+        shipperStatusMap.put(ShipperStatus.DANG_GIAO.getNumber(), ShipperStatus.DANG_GIAO.getName());
+        shipperStatusMap.put(ShipperStatus.DA_GIAO_THANH_CONG.getNumber(), ShipperStatus.DA_GIAO_THANH_CONG.getName());
+
         List<TransactionDomain> listResult = new ArrayList<>();
 
         for (TransactionEntity transaction : listTransaction){
@@ -275,6 +281,7 @@ public class UserAppServiceImpl implements UserAppService {
             domain.setDistance(transaction.getDistance());
             domain.setPaymentMethod(transaction.getPaymentMethod());
             domain.setTotal(transaction.getTotal());
+            domain.setStatus(shipperStatusMap.get(transaction.getStatus()));
             Date date = transaction.getCreatedDate();
             String createDate = DateTimeUtils.convertDateToStringOrEmpty(date, DateTimeUtils.YYYYMMDDhhmm);
             domain.setCreateDate(createDate);
@@ -323,6 +330,12 @@ public class UserAppServiceImpl implements UserAppService {
         Long total = StringUtils.convertObjectToLongOrNull(domain.getTotal());
 
         if (userAppId == null || total == null){
+            throw new CustomException(Error.PARAMETER_INVALID.getMessage()
+                    , Error.PARAMETER_INVALID.getCode(), HttpStatus.BAD_REQUEST);
+        }
+
+        UserAppEntity userAppEntity = userAppRepository.findById(userAppId).orElse(null);
+        if (userAppEntity == null){
             throw new CustomException(Error.PARAMETER_INVALID.getMessage()
                     , Error.PARAMETER_INVALID.getCode(), HttpStatus.BAD_REQUEST);
         }
@@ -382,6 +395,16 @@ public class UserAppServiceImpl implements UserAppService {
         }
         foodRepository.saveAll(listFoodBuy);
         transactionEntity.setTotal(totalPrice);
+
+        DeliveryAddressEntity deliveryAddressEntity = deliveryAddressRepository.findById(userAppEntity.getActiveAddressId()).orElse(null);
+        if (deliveryAddressEntity == null){
+            throw new CustomException("Địa chỉ giao hàng đã bị xóa", "Địa chỉ giao hàng đã bị xóa", HttpStatus.BAD_REQUEST);
+        }
+        transactionEntity.setDeliveryAddress(deliveryAddressEntity.getAddress());
+        transactionEntity.setDeliveryLatitude(deliveryAddressEntity.getLatitude());
+        transactionEntity.setDeliveryLongitude(deliveryAddressEntity.getLongitude());
+        transactionEntity.setStatus(ShipperStatus.DANG_TIM_TAI_XE.getNumber());
+
         transactionRepository.save(transactionEntity);
         transactionItemRepository.saveAll(listTransactionItem);
         cartRepository.saveAll(listCartOfUser);
@@ -471,5 +494,75 @@ public class UserAppServiceImpl implements UserAppService {
 
         adminEntity.setPassword(encodedPassword);
         userAppRepository.save(adminEntity);
+    }
+
+    public ResponseDataAPI getAllShippersAdmin(String valueSearch, Integer offset) {
+        ResponseDataAPI responseDataAPI = new ResponseDataAPI();
+
+        Sort sort = Sort.by(Sort.Order.desc("id"));
+
+        Pageable pageable = PageRequest.of(offset, 8, sort);
+
+        String searchValue = valueSearch.trim().toLowerCase(Locale.ROOT);
+
+        Page<UserAppEntity> shipperPage = userAppRepository.getListShipperBySearchValue(searchValue, RoleConstant.ROLE_SHIPPER.getRoleCode(), pageable);
+
+        if (shipperPage.getTotalElements() == 0l){
+            responseDataAPI.setData(new ArrayList<>());
+            responseDataAPI.setTotalRows(0l);
+            return responseDataAPI;
+        }
+
+        List<ShipperInfoDomain> listResult = shipperPage.stream().map(userAppEntity -> {
+            ShipperInfoDomain domain = new ShipperInfoDomain();
+            domain.setId(userAppEntity.getId());
+            domain.setCode("Shipper00" + userAppEntity.getId());
+            domain.setFullName(userAppEntity.getFullName());
+            domain.setPhone(userAppEntity.getPhone());
+            domain.setAvatar(userAppEntity.getAvatar());
+            domain.setAddress(userAppEntity.getAddress());
+            domain.setEmail(userAppEntity.getEmail());
+            domain.setGender(userAppEntity.getGender());
+            domain.setBirthYear(StringUtils.convertObjectToString(userAppEntity.getBirthYear()));
+            domain.setIsLocked(userAppEntity.getIsLocked());
+            domain.setCmnd(userAppEntity.getCmnd());
+            domain.setCreatedDate(DateTimeUtils.convertDateToStringOrEmpty(userAppEntity.getCreatedDate(), DateTimeUtils.YYYYMMDDhhmm));
+
+            return domain;
+        }).collect(Collectors.toList());
+        responseDataAPI.setData(listResult);
+        responseDataAPI.setTotalRows(shipperPage.getTotalElements());
+        return responseDataAPI;
+    }
+
+    public ResponseDataAPI getShipperInfoAdmin(String shipper) {
+        Long shipperId = StringUtils.convertObjectToLongOrNull(shipper);
+        if (shipperId == null){
+            throw new CustomException("Shipper ID bi sai", "Shipper ID bi sai", HttpStatus.BAD_REQUEST);
+        }
+        UserAppEntity shipperEntity = userAppRepository.findById(shipperId).orElse(null);
+
+        if (shipperEntity == null){
+            throw new CustomException("Shipper ID bi sai", "Shipper ID bi sai", HttpStatus.BAD_REQUEST);
+        }
+
+        ShipperInfoDomain domain = new ShipperInfoDomain();
+        domain.setId(shipperEntity.getId());
+        domain.setCode("Shipper00" + shipperEntity.getId());
+        domain.setUsername(shipperEntity.getUsername());
+        domain.setFullName(shipperEntity.getFullName());
+        domain.setPhone(shipperEntity.getPhone());
+        domain.setAvatar(shipperEntity.getAvatar());
+        domain.setAddress(shipperEntity.getAddress());
+        domain.setEmail(shipperEntity.getEmail());
+        domain.setGender(shipperEntity.getGender());
+        domain.setBirthYear(StringUtils.convertObjectToString(shipperEntity.getBirthYear()));
+        domain.setIsLocked(shipperEntity.getIsLocked());
+        domain.setCmnd(shipperEntity.getCmnd());
+        domain.setCreatedDate(DateTimeUtils.convertDateToStringOrEmpty(shipperEntity.getCreatedDate(), DateTimeUtils.YYYYMMDDhhmm));
+
+        ResponseDataAPI responseDataAPI = new ResponseDataAPI();
+        responseDataAPI.setData(domain);
+        return responseDataAPI;
     }
 }

@@ -57,7 +57,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     protected void configure(HttpSecurity http) throws Exception {
         //        // Trang chỉ dành cho ADMIN
         http.authorizeRequests().antMatchers("/admin/**").access("hasRole('ROLE_ADMIN')");
-        http.authorizeRequests().antMatchers("/user/**").access("hasAnyRole('ROLE_USER', 'ROLE_ADMIN')");
+        http.authorizeRequests().antMatchers("/shipper/**").access("hasRole('ROLE_SHIPPER')");
+        http.authorizeRequests().antMatchers("/user/**").access("hasAnyRole('ROLE_USER', 'ROLE_ADMIN', 'ROLE_SHIPPER')");
         http.authorizeRequests().antMatchers("/food/**").access("hasAnyRole('ROLE_USER', 'ROLE_ADMIN')");
         http.authorizeRequests().antMatchers("/store/**").access("hasAnyRole('ROLE_USER', 'ROLE_ADMIN')");
         http.authorizeRequests().antMatchers("/favourite/**").access("hasAnyRole('ROLE_USER', 'ROLE_ADMIN')");

@@ -114,6 +114,7 @@ public class ItemBasedFilteringServiceImpl {
     }
 
     @Scheduled(fixedRate = 672800000)
+//    need
     public void findInfoForAdminPage(){
         Long total = transactionRepository.findAll()
                 .stream()
@@ -146,6 +147,7 @@ public class ItemBasedFilteringServiceImpl {
     }
 
     @Scheduled(fixedRate = 372800000)
+//    need
     public void buildDifferencesMatrixAndPredict() {
         Map<Long, HashMap<Long, Double>> data = initializeData();
         Map<Long, Map<Long, Double>> diff = new HashMap<>();

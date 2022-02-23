@@ -2,6 +2,7 @@ package com.example.demodatn.service;
 
 import com.example.demodatn.constant.Error;
 import com.example.demodatn.constant.PaymentMethod;
+import com.example.demodatn.constant.ShipperStatus;
 import com.example.demodatn.entity.*;
 import com.example.demodatn.exception.CustomException;
 import com.example.demodatn.repository.*;
@@ -38,6 +39,9 @@ public class PaypalServiceImpl {
     @Autowired
     private TransactionItemRepository transactionItemRepository;
 
+    @Autowired
+    private DeliveryAddressRepository deliveryAddressRepository;
+
     public String handlePaypalSuccess(String userApp) {
         Long userAppId = StringUtils.convertStringToLongOrNull(userApp);
         if (userAppId == null){
@@ -45,7 +49,11 @@ public class PaypalServiceImpl {
                     , Error.PARAMETER_INVALID.getCode(), HttpStatus.BAD_REQUEST);
         }
 
-
+        UserAppEntity userAppEntity = userAppRepository.findById(userAppId).orElse(null);
+        if (userAppEntity == null){
+            throw new CustomException(Error.PARAMETER_INVALID.getMessage()
+                    , Error.PARAMETER_INVALID.getCode(), HttpStatus.BAD_REQUEST);
+        }
 
         List<CartEntity> listCartOfUser = cartRepository.findAllByUserAppId(userAppId);
         FoodEntity foodEntity = foodRepository.findById(listCartOfUser.get(0).getFoodId()).orElse(null);
@@ -98,6 +106,17 @@ public class PaypalServiceImpl {
         }
         foodRepository.saveAll(listFoodBuy);
         transactionEntity.setTotal(totalPrice);
+
+
+        DeliveryAddressEntity deliveryAddressEntity = deliveryAddressRepository.findById(userAppEntity.getActiveAddressId()).orElse(null);
+        if (deliveryAddressEntity == null){
+            throw new CustomException("Địa chỉ giao hàng đã bị xóa", "Địa chỉ giao hàng đã bị xóa", HttpStatus.BAD_REQUEST);
+        }
+        transactionEntity.setDeliveryAddress(deliveryAddressEntity.getAddress());
+        transactionEntity.setDeliveryLatitude(deliveryAddressEntity.getLatitude());
+        transactionEntity.setDeliveryLongitude(deliveryAddressEntity.getLongitude());
+        transactionEntity.setStatus(ShipperStatus.DANG_TIM_TAI_XE.getNumber());
+
         transactionRepository.save(transactionEntity);
         transactionItemRepository.saveAll(listTransactionItem);
         cartRepository.saveAll(listCartOfUser);

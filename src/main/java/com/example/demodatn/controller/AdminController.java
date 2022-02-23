@@ -157,4 +157,33 @@ public class AdminController {
     public ResponseEntity<ResponseDataAPI> getUserDataChart(){
         return ResponseEntity.ok(ResponseDataAPI.builder().data(adminService.getUserDataChart()).build());
     }
+
+    @GetMapping("/shipper/list")
+    public ResponseEntity<ResponseDataAPI> getAllShipper(@RequestParam("value_search") String valueSearch, @RequestParam("offset") String offsetStr){
+        Integer offset = StringUtils.convertStringToIntegerOrNull(offsetStr);
+        if (offset == null || offset <= 1) {
+            offset = 0;
+        } else {
+            offset = offset - 1;
+        }
+        ResponseDataAPI responseDataAPI = userAppService.getAllShippersAdmin(valueSearch, offset);
+        return ResponseEntity.ok(ResponseDataAPI.builder().data(responseDataAPI.getData()).totalRows(responseDataAPI.getTotalRows()).build());
+    }
+
+    @PostMapping("/shipper/add-new-shipper")
+    public ResponseEntity<ResponseDataAPI> addNewShipperAdmin(@RequestBody AddNewShipperDomain domain){
+        adminService.addNewShipperAdmin(domain);
+        return ResponseEntity.ok(ResponseDataAPI.builder().build());
+    }
+    @PostMapping("/shipper/edit-shipper")
+    public ResponseEntity<ResponseDataAPI> editShipperAdmin(@RequestBody EditShipperRequestDomain domain){
+        adminService.editShipperAdmin(domain);
+        return ResponseEntity.ok(ResponseDataAPI.builder().build());
+    }
+
+    @GetMapping("/shipper/info")
+    public ResponseEntity<ResponseDataAPI> getShipperInfoAdmin(@RequestParam("id") String shipperId){
+        ResponseDataAPI responseDataAPI = userAppService.getShipperInfoAdmin(shipperId);
+        return ResponseEntity.ok(ResponseDataAPI.builder().data(responseDataAPI.getData()).build());
+    }
 }

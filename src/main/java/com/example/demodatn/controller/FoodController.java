@@ -96,7 +96,7 @@ public class FoodController {
 //        return ResponseEntity.ok(ResponseDataAPI.builder().data(foodService.addNewRatingForFood(food, domain)).build());
 //    }
     @PostMapping("/{food_id}/add-rating")
-    public ResponseEntity<ResponseDataAPI> addNewRatingForFood(@RequestParam("files") MultipartFile[] files,
+    public ResponseEntity<ResponseDataAPI> addNewRatingForFood(@RequestParam(value = "files", required = false) MultipartFile[] files,
                                                                @RequestParam("user_app_id") String userAppId,
                                                                @RequestParam("rating") String rating,
                                                                @RequestParam("comment") String comment,

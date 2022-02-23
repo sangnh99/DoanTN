@@ -408,32 +408,34 @@ public class FoodServiceImpl {
 
         ratingEntity = ratingRepository.save(ratingEntity);
 
-        Cloudinary cloudinary = new Cloudinary(ObjectUtils.asMap(
-                "cloud_name", "djifhw3lo",
-                "api_key", "992726224781494",
-                "api_secret", "Tol4roEhAhgOJ3NaNsnAyWDDrD0",
-                "secure", true));
-        List<RatingImageEntity> listRatingImage = new ArrayList<>();
-        RatingEntity finalRatingEntity = ratingEntity;
-        Arrays.asList(files).stream().forEach(file -> {
-            Path filepath = Path.of("imageupload.jpg");
+        if (files != null){
+            Cloudinary cloudinary = new Cloudinary(ObjectUtils.asMap(
+                    "cloud_name", "djifhw3lo",
+                    "api_key", "992726224781494",
+                    "api_secret", "Tol4roEhAhgOJ3NaNsnAyWDDrD0",
+                    "secure", true));
+            List<RatingImageEntity> listRatingImage = new ArrayList<>();
+            RatingEntity finalRatingEntity = ratingEntity;
+            Arrays.asList(files).stream().forEach(file -> {
+                Path filepath = Path.of("imageupload.jpg");
 
-            String imageUrl = "";
-            try (OutputStream os = Files.newOutputStream(filepath)) {
-                os.write(file.getBytes());
-                Map uploadResult = cloudinary.uploader().upload(new File("imageupload.jpg"), ObjectUtils.emptyMap());
-                System.out.println("upload moi : " + uploadResult.get("url"));
-                imageUrl = (String) uploadResult.get("url");
-                RatingImageEntity ratingImageEntity = new RatingImageEntity();
-                ratingImageEntity.setRatingId(finalRatingEntity.getId());
-                ratingImageEntity.setImageUrl(imageUrl);
-                listRatingImage.add(ratingImageEntity);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        });
+                String imageUrl = "";
+                try (OutputStream os = Files.newOutputStream(filepath)) {
+                    os.write(file.getBytes());
+                    Map uploadResult = cloudinary.uploader().upload(new File("imageupload.jpg"), ObjectUtils.emptyMap());
+                    System.out.println("upload moi : " + uploadResult.get("url"));
+                    imageUrl = (String) uploadResult.get("url");
+                    RatingImageEntity ratingImageEntity = new RatingImageEntity();
+                    ratingImageEntity.setRatingId(finalRatingEntity.getId());
+                    ratingImageEntity.setImageUrl(imageUrl);
+                    listRatingImage.add(ratingImageEntity);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            });
 
-        ratingImageRepository.saveAll(listRatingImage);
+            ratingImageRepository.saveAll(listRatingImage);
+        }
         success = "success";
         return success;
     }
@@ -661,19 +663,33 @@ public class FoodServiceImpl {
 
         List<TransactionDomain> listResult = new ArrayList<>();
 
+        Map<Integer, String> shipperStatusMap = new HashMap<>();
+        shipperStatusMap.put(ShipperStatus.DANG_TIM_TAI_XE.getNumber(), ShipperStatus.DANG_TIM_TAI_XE.getName());
+        shipperStatusMap.put(ShipperStatus.DANG_CHO_LAY_HANG.getNumber(), ShipperStatus.DANG_CHO_LAY_HANG.getName());
+        shipperStatusMap.put(ShipperStatus.DANG_GIAO.getNumber(), ShipperStatus.DANG_GIAO.getName());
+        shipperStatusMap.put(ShipperStatus.DA_GIAO_THANH_CONG.getNumber(), ShipperStatus.DA_GIAO_THANH_CONG.getName());
+
         for (TransactionEntity transaction : listTransaction){
             TransactionDomain domain = new TransactionDomain();
             domain.setId(StringUtils.convertObjectToString(transaction.getId()));
-            domain.setComment(transaction.getComment());
+            domain.setComment(transaction.getDeliveryAddress());
             domain.setDistance(transaction.getDistance());
             domain.setPaymentMethod(transaction.getPaymentMethod());
             domain.setTotal(transaction.getTotal());
+            domain.setStatus(shipperStatusMap.get(transaction.getStatus()));
             domain.setUserAppId(StringUtils.convertObjectToString(transaction.getUserAppId()));
+            if (transaction.getShipperId() == null){
+                domain.setShipperName("Chưa có");
+            } else {
+                UserAppEntity shipperEntity = userAppRepository.findById(transaction.getShipperId()).orElse(null);
+                domain.setShipperName(shipperEntity.getFullName());
+            }
+
             UserAppEntity userAppEntity = userAppRepository.findById(transaction.getUserAppId()).orElse(null);
             if (userAppEntity == null){
                 throw new CustomException("User ko ton tai", "User ko ton tai", HttpStatus.BAD_REQUEST);
             }
-            domain.setUserAppName(userAppEntity.getUsername());
+            domain.setUserAppName(userAppEntity.getUsername() + " - " + userAppEntity.getPhone());
             Date date = transaction.getCreatedDate();
             String createDate = DateTimeUtils.convertDateToStringOrEmpty(date, DateTimeUtils.YYYYMMDDhhmm);
             domain.setCreateDate(createDate);

@@ -3,6 +3,7 @@ package com.example.demodatn.entity;
 import org.hibernate.annotations.Where;
 
 import javax.persistence.*;
+import java.util.Date;
 
 @Entity
 @Table(name = "TRANSACTION")
@@ -28,6 +29,23 @@ public class TransactionEntity extends BaseEntity{
     private Long deliveryAddressId;
     @Column(name = "STORE_ID")
     private Long storeId;
+
+    @Column(name = "STATUS")
+    private Integer status;
+    @Column(name = "SHIPPER_ID")
+    private Long shipperId;
+    @Column(name = "TIME_START")
+    private Date timeStart;
+    @Column(name = "TIME_END")
+    private Date timeEnd;
+
+    @Column(name = "DELIVERY_ADDRESS")
+    private String deliveryAddress;
+    @Column(name = "DELIVERY_LATITUDE")
+    private Double deliveryLatitude;
+    @Column(name = "DELIVERY_LONGITUDE")
+    private Double deliveryLongitude;
+
 
     public Long getId() {
         return id;
@@ -91,5 +109,61 @@ public class TransactionEntity extends BaseEntity{
 
     public void setStoreId(Long storeId) {
         this.storeId = storeId;
+    }
+
+    public Integer getStatus() {
+        return status;
+    }
+
+    public void setStatus(Integer status) {
+        this.status = status;
+    }
+
+    public Long getShipperId() {
+        return shipperId;
+    }
+
+    public void setShipperId(Long shipperId) {
+        this.shipperId = shipperId;
+    }
+
+    public Date getTimeStart() {
+        return timeStart;
+    }
+
+    public void setTimeStart(Date timeStart) {
+        this.timeStart = timeStart;
+    }
+
+    public Date getTimeEnd() {
+        return timeEnd;
+    }
+
+    public void setTimeEnd(Date timeEnd) {
+        this.timeEnd = timeEnd;
+    }
+
+    public String getDeliveryAddress() {
+        return deliveryAddress;
+    }
+
+    public void setDeliveryAddress(String deliveryAddress) {
+        this.deliveryAddress = deliveryAddress;
+    }
+
+    public Double getDeliveryLatitude() {
+        return deliveryLatitude;
+    }
+
+    public void setDeliveryLatitude(Double deliveryLatitude) {
+        this.deliveryLatitude = deliveryLatitude;
+    }
+
+    public Double getDeliveryLongitude() {
+        return deliveryLongitude;
+    }
+
+    public void setDeliveryLongitude(Double deliveryLongitude) {
+        this.deliveryLongitude = deliveryLongitude;
     }
 }

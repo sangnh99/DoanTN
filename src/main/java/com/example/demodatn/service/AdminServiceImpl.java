@@ -1,9 +1,7 @@
 package com.example.demodatn.service;
 
-import com.example.demodatn.domain.IncomeAndTotalOrderByMonthDomain;
-import com.example.demodatn.domain.IncomeByStoreDomain;
-import com.example.demodatn.domain.NewUserChartDomain;
-import com.example.demodatn.domain.TotalInfoDashboardAdminDomain;
+import com.example.demodatn.constant.RoleConstant;
+import com.example.demodatn.domain.*;
 import com.example.demodatn.entity.*;
 import com.example.demodatn.exception.CustomException;
 import com.example.demodatn.repository.*;
@@ -11,6 +9,7 @@ import com.example.demodatn.util.StringUtils;
 import net.bytebuddy.agent.builder.AgentBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
@@ -38,6 +37,9 @@ public class AdminServiceImpl {
 
     @Autowired
     private TransactionItemRepository transactionItemRepository;
+
+    @Autowired
+    private UserRoleRepository userRoleRepository;
 
     public TotalInfoDashboardAdminDomain getTotalInfoDashboard(){
         MetadataEntity metadataEntity = metadataRepository.findById(1l).orElse(null);
@@ -168,5 +170,72 @@ public class AdminServiceImpl {
             listResult.add(domain);
         }
         return listResult;
+    }
+
+    public void addNewShipperAdmin(AddNewShipperDomain domain) {
+        UserAppEntity userAppEntity = new UserAppEntity();
+
+        UserAppEntity userCheckEmail = userAppRepository.findByEmail(domain.getEmail());
+        UserAppEntity userCheckUsername = userAppRepository.findByUsername(domain.getUsername()).orElse(null);
+
+        if (userCheckEmail != null){
+            throw new CustomException("Email đã tồn tại, vui lòng nhập email khác !", "Email đã tồn tại, vui lòng nhập email khác !", HttpStatus.BAD_REQUEST);
+        }
+
+        if (userCheckUsername != null){
+            throw new CustomException("Tên đăng nhập đã tồn tại, vui lòng nhập tên đăng nhập khác !", "Tên đăng nhập đã tồn tại, vui lòng nhập tên đăng nhập khác !", HttpStatus.BAD_REQUEST);
+        }
+
+
+        userAppEntity.setUsername(domain.getUsername());
+        BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
+        userAppEntity.setPassword(bCryptPasswordEncoder.encode(domain.getPassword()));
+        userAppEntity.setFullName(domain.getFullName());
+        userAppEntity.setBirthYear(StringUtils.convertStringToIntegerOrNull(domain.getBirthYear()));
+        userAppEntity.setGender(domain.getGender());
+        userAppEntity.setEmail(domain.getEmail());
+        userAppEntity.setPhone(domain.getPhone());
+        userAppEntity.setCmnd(domain.getCmnd());
+        userAppEntity.setAddress(domain.getAddress());
+        userAppEntity.setAvatar(domain.getAvatar());
+        userAppEntity.setIsBusyShipper(0);
+        userAppEntity.setIsLocked(0);
+
+        userAppEntity = userAppRepository.save(userAppEntity);
+
+        UserRoleEntity userRoleEntity = new UserRoleEntity();
+        userRoleEntity.setRoleId(RoleConstant.ROLE_SHIPPER.getNumber());
+        userRoleEntity.setUserId(userAppEntity.getId());
+
+        userRoleRepository.save(userRoleEntity);
+    }
+
+    public void editShipperAdmin(EditShipperRequestDomain domain) {
+        Long shipperId = StringUtils.convertObjectToLongOrNull(domain.getId());
+        if (shipperId == null){
+            throw new CustomException("Shipper ID bi sai", "Shipper ID bi sai", HttpStatus.BAD_REQUEST);
+        }
+        UserAppEntity shipperEntity = userAppRepository.findById(shipperId).orElse(null);
+
+        if (shipperEntity == null){
+            throw new CustomException("Shipper ID bi sai", "Shipper ID bi sai", HttpStatus.BAD_REQUEST);
+        }
+
+        UserAppEntity userCheckEmail = userAppRepository.findByEmail(domain.getEmail());
+
+        if (userCheckEmail != null && !userCheckEmail.getId().equals(shipperId)){
+            throw new CustomException("Email đã tồn tại, vui lòng nhập email khác !", "Email đã tồn tại, vui lòng nhập email khác !", HttpStatus.BAD_REQUEST);
+        }
+
+        shipperEntity.setFullName(domain.getFullName());
+        shipperEntity.setBirthYear(StringUtils.convertStringToIntegerOrNull(domain.getBirthYear()));
+        shipperEntity.setGender(domain.getGender());
+        shipperEntity.setEmail(domain.getEmail());
+        shipperEntity.setPhone(domain.getPhone());
+        shipperEntity.setCmnd(domain.getCmnd());
+        shipperEntity.setAddress(domain.getAddress());
+        shipperEntity.setAvatar(domain.getAvatar());
+
+        userAppRepository.save(shipperEntity);
     }
 }
