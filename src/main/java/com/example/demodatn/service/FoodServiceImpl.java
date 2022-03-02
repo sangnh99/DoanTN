@@ -153,6 +153,7 @@ public class FoodServiceImpl {
         FoodWithCommentDomain domain = new FoodWithCommentDomain();
         domain.setFoodId(StringUtils.convertObjectToString(t.getId()));
         domain.setFoodName(t.getName());
+        domain.setLikeNumber(t.getLikeNumber());
         domain.setFoodTypeId(StringUtils.convertObjectToString(t.getFoodTypeId()));
         domain.setStoreId(StringUtils.convertObjectToString(t.getStoreId()));
         domain.setStoreName(storeEntity.getName());

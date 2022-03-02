@@ -35,6 +35,8 @@ public class FoodEntity extends BaseEntity{
     private Integer totalBuy;
     @Column(name = "IS_BEST_SELLER")
     private Integer isBestSeller;
+    @Column(name = "LIKE_NUMBER")
+    private Integer likeNumber;
 
 
     public Long getId() {
@@ -131,5 +133,13 @@ public class FoodEntity extends BaseEntity{
 
     public void setIsBestSeller(Integer isBestSeller) {
         this.isBestSeller = isBestSeller;
+    }
+
+    public Integer getLikeNumber() {
+        return likeNumber;
+    }
+
+    public void setLikeNumber(Integer likeNumber) {
+        this.likeNumber = likeNumber;
     }
 }

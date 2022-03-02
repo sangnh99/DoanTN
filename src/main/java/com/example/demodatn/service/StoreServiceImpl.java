@@ -258,6 +258,7 @@ public class StoreServiceImpl {
         listConvertFoodType.put("Đặt sản", 4l);
         listConvertFoodType.put("Healthy", 5l);
         listConvertFoodType.put("Đồ uống", 6l);
+        listConvertFoodType.put("Khác", 7l);
 
 
 
@@ -405,6 +406,7 @@ public class StoreServiceImpl {
         listConvertFoodType.put(4l, "Đặt sản");
         listConvertFoodType.put(5l, "Healthy");
         listConvertFoodType.put(6l, "Đồ uống");
+        listConvertFoodType.put(7l, "Khác");
 
         Page<FoodEntity> listFoodOfStore = foodRepository.getAllFoodOfStoreAdmin(storeId, searchValue, pageable);
         List<EditFoodDomain> listResult = new ArrayList<>();
@@ -496,6 +498,7 @@ public class StoreServiceImpl {
         listConvertFoodType.put("Đặt sản", 4l);
         listConvertFoodType.put("Healthy", 5l);
         listConvertFoodType.put("Đồ uống", 6l);
+        listConvertFoodType.put("Khác", 7l);
 
         FoodEntity foodEntity = new FoodEntity();
         foodEntity.setName(createNewFoodDomain.getName());
@@ -554,6 +557,7 @@ public class StoreServiceImpl {
         listConvertFoodType.put("Đặt sản", 4l);
         listConvertFoodType.put("Healthy", 5l);
         listConvertFoodType.put("Đồ uống", 6l);
+        listConvertFoodType.put("Khác", 7l);
 
         List<String> listFoodNameOfStore = foodRepository.findAllByStoreId(storeEntity.getId()).stream().filter(t -> !t.getId().equals(foodId)).map(t -> t.getName()).collect(Collectors.toList());
         if (listFoodNameOfStore.contains(domain.getName())){

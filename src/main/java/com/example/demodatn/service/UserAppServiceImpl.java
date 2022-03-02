@@ -421,7 +421,7 @@ public class UserAppServiceImpl implements UserAppService {
 
         String searchValue = valueSearch.trim().toLowerCase(Locale.ROOT);
 
-        Page<UserAppEntity> userAppPage = userAppRepository.getListUserBySearchValue(searchValue, pageable);
+        Page<UserAppEntity> userAppPage = userAppRepository.getListUserBySearchValue(searchValue, RoleConstant.ROLE_USER.getRoleCode(), pageable);
 
         if (userAppPage.getTotalElements() == 0l){
             return responseDataAPI;

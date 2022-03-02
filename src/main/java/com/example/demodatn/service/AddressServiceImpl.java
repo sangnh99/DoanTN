@@ -101,6 +101,11 @@ public class AddressServiceImpl {
             throw new CustomException(Error.PARAMETER_INVALID.getMessage()
                     , Error.PARAMETER_INVALID.getCode(), HttpStatus.BAD_REQUEST);
         }
+        List<DeliveryAddressEntity> listCurrentAddress = deliveryAddressRepository.findAllByUserAppId(userAppId);
+        if (!CollectionUtils.isEmpty(listCurrentAddress) && listCurrentAddress.size() == 1){
+            throw new CustomException("Bạn phải có ít nhất một địa chỉ giao hàng"
+                    , "Bạn phải có ít nhất một địa chỉ giao hàng", HttpStatus.BAD_REQUEST);
+        }
         addressEntity.setIsDeleted(1);
         deliveryAddressRepository.save(addressEntity);
         if (addressId.equals(userAppEntity.getActiveAddressId())){

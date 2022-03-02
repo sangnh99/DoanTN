@@ -25,7 +25,6 @@ public class PaypalController {
 
     @Autowired
     private PaypalServiceImpl paypalService;
-
     //    public static final String SUCCESS_URL = "http://localhost:8081/handle-paypal";
 //    public static final String CANCEL_URL = "http://localhost:8081/payment";
     public static final String SUCCESS_URL = "https://sang-order.herokuapp.com/handle-paypal";

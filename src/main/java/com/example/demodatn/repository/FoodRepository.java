@@ -19,7 +19,7 @@ public interface FoodRepository extends JpaRepository<FoodEntity, Long> {
 
     List<FoodEntity> findAllByStoreId(Long storeId);
 
-    @Query(value = "select f from FoodEntity f where lower(f.name) like %?1% ")
+    @Query(value = "select f from FoodEntity f where lower(f.name) like %?1% and f.foodTypeId <> 7")
     Page<FoodEntity> findFoodBySearchValue(String valueSearch, Pageable pageable);
 
     @Query(value = "select f from FoodEntity f where f.discountPercent is not null order by f.discountPercent desc ")
