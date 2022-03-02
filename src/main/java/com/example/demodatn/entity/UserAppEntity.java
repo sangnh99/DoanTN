@@ -36,6 +36,17 @@ public class UserAppEntity extends BaseEntity{
     private Long activeAddressId;
     @Column(name = "IS_LOCKED")
     private Integer isLocked;
+    @Column(name = "FORGOT_PASSWORD_TOKEN")
+    private String forgotPasswordToken;
+    @Column(name = "IS_BUSY_SHIPPER")
+    private Integer isBusyShipper;
+    @Column(name = "CMND")
+    private String cmnd;
+
+    @Column(name = "GENDER")
+    private String gender;
+    @Column(name = "BIRTH_YEAR")
+    private Integer birthYear;
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @JoinColumn(name = "USER_ID", insertable = false, updatable = false)
@@ -145,5 +156,45 @@ public class UserAppEntity extends BaseEntity{
 
     public void setIsLocked(Integer isLocked) {
         this.isLocked = isLocked;
+    }
+
+    public String getForgotPasswordToken() {
+        return forgotPasswordToken;
+    }
+
+    public void setForgotPasswordToken(String forgotPasswordToken) {
+        this.forgotPasswordToken = forgotPasswordToken;
+    }
+
+    public Integer getIsBusyShipper() {
+        return isBusyShipper;
+    }
+
+    public void setIsBusyShipper(Integer isBusyShipper) {
+        this.isBusyShipper = isBusyShipper;
+    }
+
+    public String getCmnd() {
+        return cmnd;
+    }
+
+    public void setCmnd(String cmnd) {
+        this.cmnd = cmnd;
+    }
+
+    public String getGender() {
+        return gender;
+    }
+
+    public void setGender(String gender) {
+        this.gender = gender;
+    }
+
+    public Integer getBirthYear() {
+        return birthYear;
+    }
+
+    public void setBirthYear(Integer birthYear) {
+        this.birthYear = birthYear;
     }
 }

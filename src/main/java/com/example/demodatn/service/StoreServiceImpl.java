@@ -7,6 +7,7 @@ import com.example.demodatn.entity.*;
 import com.example.demodatn.exception.CustomException;
 import com.example.demodatn.repository.*;
 import com.example.demodatn.util.CalculateDistanceUtils;
+import com.example.demodatn.util.DateTimeUtils;
 import com.example.demodatn.util.FormatRatingUtils;
 import com.example.demodatn.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -61,6 +62,9 @@ public class StoreServiceImpl {
     @Autowired
     private TransactionRepository transactionRepository;
 
+    @Autowired
+    private RatingImageRepository ratingImageRepository;
+
 
     public StoreDetailDomain getStoreDetail(String store, String userApp){
         Long userAppId = StringUtils.convertStringToLongOrNull(userApp);
@@ -102,20 +106,31 @@ public class StoreServiceImpl {
         storeDetailDomain.setNumberOfRating(listRatingIds.size());
         List<CommentDomain> listComments = new ArrayList<>();
         if (!CollectionUtils.isEmpty(listRatingIds)){
-            listComments = listRatingIds.stream().map(ratingEntity -> {
+            listComments = listRatingIds.stream().filter(entity -> !StringUtils.isEmpty(entity.getComment()))
+                    .sorted((t1, t2) -> t2.getCreatedDate().compareTo(t1.getCreatedDate()))
+                    .map(ratingEntity -> {
                 CommentDomain commentDomain = new CommentDomain();
                 UserAppEntity userAppEntity = userAppRepository.getById(ratingEntity.getUserAppId());
                 FoodEntity foodEntity = foodRepository.findById(ratingEntity.getFoodId()).orElse(null);
                 commentDomain.setId(StringUtils.convertObjectToString(ratingEntity.getId()));
                 commentDomain.setFoodId(StringUtils.convertObjectToString(foodEntity.getId()));
                 commentDomain.setFoodName(foodEntity.getName());
+                commentDomain.setUserAvatar(userAppEntity.getAvatar());
+                List<RatingImageEntity> listImageRating = ratingImageRepository.findByRatingId(ratingEntity.getId());
+                if (CollectionUtils.isEmpty(listImageRating)){
+                    commentDomain.setListImage(new ArrayList<>());
+                } else {
+                    commentDomain.setListImage(listImageRating.stream().map(a -> a.getImageUrl()).collect(Collectors.toList()));
+                }
+                String createDate = DateTimeUtils.convertDateToStringOrEmpty(ratingEntity.getCreatedDate(), DateTimeUtils.YYYYMMDDhhmm);
+                commentDomain.setCreatedDate(createDate);
                 commentDomain.setUserAppName(userAppEntity.getUsername());
                 commentDomain.setRating(StringUtils.convertObjectToString(ratingEntity.getRating()));
                 commentDomain.setComment(ratingEntity.getComment());
                 commentDomain.setLikeNumber(ratingEntity.getLikeNumber() == null ? "0" : StringUtils.convertObjectToString(ratingEntity.getLikeNumber()));
                 commentDomain.setDislikeNumber(ratingEntity.getDislikeNumber() == null ? "0" : StringUtils.convertObjectToString(ratingEntity.getDislikeNumber()));
                 return commentDomain;
-            }).filter(entity -> !StringUtils.isEmpty(entity.getComment())).collect(Collectors.toList());
+            }).collect(Collectors.toList());
             storeDetailDomain.setListComments(listComments);
         } else {
             storeDetailDomain.setListComments(new ArrayList<>());

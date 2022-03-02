@@ -2,6 +2,7 @@ package com.example.demodatn.controller;
 
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
+import com.example.demodatn.domain.AddRatingDomain;
 import com.example.demodatn.domain.ResponseDataAPI;
 import com.example.demodatn.domain.UserAppIdDomain;
 import com.example.demodatn.entity.UserAppEntity;
@@ -22,6 +23,7 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Map;
 
 
@@ -82,5 +84,30 @@ public class ImageController {
             e.printStackTrace();
         }
         return ResponseEntity.ok(ResponseDataAPI.builder().data(imageUrl).build());
+    }
+
+    @RequestMapping(value = "/upload-images-antd" ,method = RequestMethod.POST)
+    public ResponseEntity<ResponseDataAPI> uploadImagesAntd(@RequestParam("files") MultipartFile[] files, @RequestParam("comment") String domain) throws IOException {
+        Cloudinary cloudinary = new Cloudinary(ObjectUtils.asMap(
+                "cloud_name", "djifhw3lo",
+                "api_key", "992726224781494",
+                "api_secret", "Tol4roEhAhgOJ3NaNsnAyWDDrD0",
+                "secure", true));
+        System.out.println(domain);
+        Arrays.asList(files).stream().forEach(file -> {
+            Path filepath = Path.of("imageupload.jpg");
+
+            String imageUrl = "";
+            try (OutputStream os = Files.newOutputStream(filepath)) {
+                os.write(file.getBytes());
+                Map uploadResult = cloudinary.uploader().upload(new File("imageupload.jpg"), ObjectUtils.emptyMap());
+                System.out.println("upload moi : " + uploadResult.get("url"));
+                imageUrl = (String) uploadResult.get("url");
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
+        return ResponseEntity.ok(ResponseDataAPI.builder().data(null).build());
     }
 }

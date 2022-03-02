@@ -20,4 +20,10 @@ public interface TransactionRepository extends JpaRepository<TransactionEntity, 
 
     @Query(value = "select t from TransactionEntity t order by t.createdDate asc ")
     List<TransactionEntity> findAllAndOrderByCreatedDate();
+
+    @Query(value = "select t from TransactionEntity t inner join StoreEntity s on s.id = t.storeId where lower(s.name) like %?1% and t.status = 1")
+    Page<TransactionEntity> getListAvailableTransactions(String searchValue, Pageable pageable);
+
+    @Query(value = "select t from TransactionEntity t inner join StoreEntity s on s.id = t.storeId where t.shipperId = ?1 and lower(s.name) like %?2% and t.status = 4")
+    Page<TransactionEntity> getListTransactionOfShipper(Long shipperId, String searchValue, Pageable pageable);
 }

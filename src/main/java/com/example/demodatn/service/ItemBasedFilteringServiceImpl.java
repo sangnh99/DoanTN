@@ -80,7 +80,7 @@ public class ItemBasedFilteringServiceImpl {
         return data;
     }
 
-//    @Scheduled(fixedRate = 272800000)
+    @Scheduled(fixedRate = 172800000)
 //    need
     public void setSummaryRating(){
         List<FoodEntity> listFood = foodRepository.findAll();
@@ -113,7 +113,8 @@ public class ItemBasedFilteringServiceImpl {
 
     }
 
-//    @Scheduled(fixedRate = 672800000)
+    @Scheduled(fixedRate = 672800000)
+//    need
     public void findInfoForAdminPage(){
         Long total = transactionRepository.findAll()
                 .stream()
@@ -145,7 +146,8 @@ public class ItemBasedFilteringServiceImpl {
         transactionRepository.saveAll(lisResult);
     }
 
-//    @Scheduled(fixedRate = 572800000)
+    @Scheduled(fixedRate = 372800000)
+//    need
     public void buildDifferencesMatrixAndPredict() {
         Map<Long, HashMap<Long, Double>> data = initializeData();
         Map<Long, Map<Long, Double>> diff = new HashMap<>();

@@ -3,6 +3,8 @@ package com.example.demodatn.domain;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 
+import java.util.List;
+
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public class CommentDomain {
     private String id;
@@ -13,6 +15,9 @@ public class CommentDomain {
     private String comment;
     private String likeNumber;
     private String dislikeNumber;
+    private List<String> listImage;
+    private String createdDate;
+    private String userAvatar;
 
     public String getId() {
         return id;
@@ -76,5 +81,29 @@ public class CommentDomain {
 
     public void setFoodName(String foodName) {
         this.foodName = foodName;
+    }
+
+    public List<String> getListImage() {
+        return listImage;
+    }
+
+    public void setListImage(List<String> listImage) {
+        this.listImage = listImage;
+    }
+
+    public String getCreatedDate() {
+        return createdDate;
+    }
+
+    public void setCreatedDate(String createdDate) {
+        this.createdDate = createdDate;
+    }
+
+    public String getUserAvatar() {
+        return userAvatar;
+    }
+
+    public void setUserAvatar(String userAvatar) {
+        this.userAvatar = userAvatar;
     }
 }

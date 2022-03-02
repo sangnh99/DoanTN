@@ -21,6 +21,15 @@ public class TransactionDomain {
     private String storeAvatar;
     private List<TransactionItemDomain> listItem;
 
+    private Double lat;
+    private Double lng;
+    private String status;
+
+    private String timeStart;
+    private String timeEnd;
+    private Long shipperId;
+    private String shipperName;
+
     public String getId() {
         return id;
     }
@@ -123,5 +132,61 @@ public class TransactionDomain {
 
     public void setUserAppName(String userAppName) {
         this.userAppName = userAppName;
+    }
+
+    public Double getLat() {
+        return lat;
+    }
+
+    public void setLat(Double lat) {
+        this.lat = lat;
+    }
+
+    public Double getLng() {
+        return lng;
+    }
+
+    public void setLng(Double lng) {
+        this.lng = lng;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public String getTimeStart() {
+        return timeStart;
+    }
+
+    public void setTimeStart(String timeStart) {
+        this.timeStart = timeStart;
+    }
+
+    public String getTimeEnd() {
+        return timeEnd;
+    }
+
+    public void setTimeEnd(String timeEnd) {
+        this.timeEnd = timeEnd;
+    }
+
+    public Long getShipperId() {
+        return shipperId;
+    }
+
+    public void setShipperId(Long shipperId) {
+        this.shipperId = shipperId;
+    }
+
+    public String getShipperName() {
+        return shipperName;
+    }
+
+    public void setShipperName(String shipperName) {
+        this.shipperName = shipperName;
     }
 }

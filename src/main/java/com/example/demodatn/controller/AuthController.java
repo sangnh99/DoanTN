@@ -7,6 +7,7 @@ import com.example.demodatn.exception.CustomException;
 import com.example.demodatn.repository.UserAppRepository;
 import com.example.demodatn.service.*;
 import com.example.demodatn.util.SiteUrlUtils;
+import com.example.demodatn.util.StringUtils;
 import net.bytebuddy.utility.RandomString;
 
 import org.apache.commons.lang3.RandomStringUtils;
@@ -76,6 +77,39 @@ public class AuthController {
             ex.printStackTrace();
         }
 
+        return ResponseEntity.ok(ResponseDataAPI.builder().build());
+    }
+
+    @PostMapping("/forgot_password/confirm-email")
+    public ResponseEntity<ResponseDataAPI> congirmEmailForgotPassword(@RequestBody EmailDomain domain) throws Exception {
+        String email = domain.getEmail();
+//        String token = RandomStringUtils.randomAlphabetic(30);
+        String token = RandomString.make(30);
+        UserAppEntity userApp = null;
+        try {
+            userApp = userAppService.updateForgotPasswordToken(token, email);
+            userAppService.sendEmailVerify(email, token);
+
+        } catch (Exception ex) {
+            throw new CustomException("Could not find any customer with the email " + email, "Could not find any customer with the email " + email, HttpStatus.BAD_REQUEST);
+        }
+
+        UserAppInfoResponseForgotPassDomain response = new UserAppInfoResponseForgotPassDomain();
+        response.setToken(token);
+        response.setUserAppId(userApp.getId());
+
+        return ResponseEntity.ok(ResponseDataAPI.builder().data(response).build());
+    }
+
+    @PostMapping("/forgot_password/reset_password")
+    public ResponseEntity<ResponseDataAPI> resetPasswordForgotPassword(@RequestBody ForgotPasswordDomain domain) throws Exception{
+        String newPassword = domain.getNewPassword();
+
+        UserAppEntity userAppEntity = userAppRepository.findById(StringUtils.convertStringToLongOrNull(domain.getUserAppId())).orElse(null);
+        if (userAppEntity == null || userAppEntity.getIsLocked().equals(1) || !userAppEntity.getEmail().equals(domain.getEmail())){
+            throw new CustomException("Đã có lỗi xảy ra, vui lòng thử lại sau !", "Đã có lỗi xảy ra, vui lòng thử lại sau !", HttpStatus.BAD_REQUEST);
+        }
+        userAppService.updatePassword(userAppEntity, newPassword);
         return ResponseEntity.ok(ResponseDataAPI.builder().build());
     }
 

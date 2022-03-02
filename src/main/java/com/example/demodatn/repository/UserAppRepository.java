@@ -35,4 +35,9 @@ public interface UserAppRepository extends JpaRepository<UserAppEntity, Long> {
 
     @Query(value = "select u from UserAppEntity u order by u.createdDate asc ")
     List<UserAppEntity> getListUserAppByCreateDate();
+
+    UserAppEntity findByEmailAndIsLocked(String email, Integer isLocked);
+
+    @Query(value = "select u from UserAppEntity u inner join UserRoleEntity ur on ur.userId = u.id inner join RoleEntity r on r.id = ur.roleId where lower(u.fullName) like %?1% and u.id <> 18 and r.code = ?2")
+    Page<UserAppEntity> getListShipperBySearchValue(String valueSearch, String role,  Pageable pageable);
 }
