@@ -116,7 +116,7 @@ public class StoreServiceImpl {
                 commentDomain.setFoodId(StringUtils.convertObjectToString(foodEntity.getId()));
                 commentDomain.setFoodName(foodEntity.getName());
                 commentDomain.setUserAvatar(userAppEntity.getAvatar());
-                List<RatingImageEntity> listImageRating = ratingImageRepository.findByRatingId(ratingEntity.getId());
+                List<RatingImageEntity> listImageRating = ratingImageRepository.findAllByRatingId(ratingEntity.getId());
                 if (CollectionUtils.isEmpty(listImageRating)){
                     commentDomain.setListImage(new ArrayList<>());
                 } else {
@@ -606,6 +606,12 @@ public class StoreServiceImpl {
         if (storeEntity == null){
             throw new CustomException("store id bi sai", "store id bi sai", HttpStatus.BAD_REQUEST);
         }
+        List<RatingEntity> listRating = ratingRepository.findAllByFoodId(foodEntity.getId());
+        if (!CollectionUtils.isEmpty(listRating)){
+            for (RatingEntity ratingEntity : listRating){
+                ratingImageRepository.deleteALlImageByRatingId(ratingEntity.getId());
+            }
+        }
         cartRepository.deleteAllCartByFoodId(foodId);
         favouriteRepository.deleteAllFavouriteByFoodId(foodId);
         ratingRepository.deleteAllRatingByFoodId(foodId);
@@ -614,6 +620,48 @@ public class StoreServiceImpl {
         foodRepository.save(foodEntity);
 
         return getAllFoodOfStoreAdmin(storeEntity.getId().toString(), 0, "");
+    }
+
+    @Transactional
+    public ResponseDataAPI deleteStoreAdmin(String storeStr) {
+        Long storeId = StringUtils.convertStringToLongOrNull(storeStr);
+        if (storeId == null){
+            throw new CustomException("Store id bi sai", "Store id bi sai", HttpStatus.BAD_REQUEST);
+        }
+        StoreEntity storeEntity = storeRepository.findById(storeId).orElse(null);
+
+        if (storeEntity == null){
+            throw new CustomException("store id bi sai", "store id bi sai", HttpStatus.BAD_REQUEST);
+        }
+
+        List<FoodEntity> listFoodOfStore = foodRepository.findAllByStoreId(storeId);
+        List<FoodEntity> listDeleteFood = new ArrayList<>();
+        if (!CollectionUtils.isEmpty(listFoodOfStore)){
+            for (FoodEntity foodEntity : listFoodOfStore){
+                cartRepository.deleteAllCartByFoodId(foodEntity.getId());
+                favouriteRepository.deleteAllFavouriteByFoodId(foodEntity.getId());
+                List<RatingEntity> listRating = ratingRepository.findAllByFoodId(foodEntity.getId());
+                if (!CollectionUtils.isEmpty(listRating)){
+                    for (RatingEntity ratingEntity : listRating){
+                        ratingImageRepository.deleteALlImageByRatingId(ratingEntity.getId());
+                    }
+                }
+                ratingRepository.deleteAllRatingByFoodId(foodEntity.getId());
+                transactionItemRepository.deleteAllByFoodId(foodEntity.getId());
+                foodEntity.setIsDeleted(1);
+                listDeleteFood.add(foodEntity);
+            }
+        }
+
+        foodRepository.saveAll(listDeleteFood);
+        transactionRepository.deleteAllByStoreId(storeId);
+        favouriteRepository.deleteAllFavouriteByStoreId(storeId);
+        subFoodTypeRepository.deleteAllByStoreId(storeId);
+
+        storeEntity.setIsDeleted(1);
+        storeRepository.save(storeEntity);
+
+        return this.getAllStoreAdmin("", 1);
     }
 }
 

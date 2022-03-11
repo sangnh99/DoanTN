@@ -80,8 +80,9 @@ public class FoodServiceImpl {
     @Autowired
     private RatingImageRepository ratingImageRepository;
 
-    public List<FoodDomain> getListFoodByFoodType(String userApp, String foodTypeStr, BasicRequest request){
+    public ResponseDataAPI getListFoodByFoodType(String userApp, String foodTypeStr, BasicRequest request){
         Long userAppId = StringUtils.convertStringToLongOrNull(userApp);
+        ResponseDataAPI responseDataAPI = new ResponseDataAPI();
         if (userAppId == null){
             throw new CustomException(Error.PARAMETER_INVALID.getMessage()
                     , Error.PARAMETER_INVALID.getCode(), HttpStatus.BAD_REQUEST);
@@ -112,27 +113,30 @@ public class FoodServiceImpl {
         Pageable pageable = PageRequest.of(request.getOffset(), request.getLimit(), sort);
 
         String searchValue = request.getValueSearch().trim().toLowerCase(Locale.ROOT);
-        Page<FoodEntity> foodEntities = foodRepository.getListFoodByFoodType(foodType, searchValue , pageable);
+        Page<FoodEntity> foodEntitiesOrg = foodRepository.getListFoodByFoodType(foodType, searchValue , pageable);
+        List<FoodDomain> responseList = new ArrayList<>();
+        responseDataAPI.setTotalRows(foodEntitiesOrg.getTotalElements());
+            responseList = foodEntitiesOrg.stream().map(t -> {
+                        FoodDomain domain = new FoodDomain();
+                        domain.setId(StringUtils.convertObjectToString(t.getId()));
+                        domain.setName(t.getName());
+                        domain.setFoodTypeId(StringUtils.convertObjectToString(t.getFoodTypeId()));
+                        domain.setStoreId(StringUtils.convertObjectToString(t.getStoreId()));
+                        domain.setStoreName(storeRepository.findById(t.getStoreId()).orElse(null).getName());
+                        domain.setSummaryRating(StringUtils.convertObjectToString(t.getSummaryRating()));
+                        domain.setAvatar(t.getAvatar());
+                        domain.setIsBestSeller(t.getIsBestSeller());
+                        domain.setTotalBuy(t.getTotalBuy());
+                        domain.setPrice(StringUtils.convertObjectToString(t.getPrice()));
+                        domain.setDiscountPercent(t.getDiscountPercent());
+                        domain.setOriginalPrice(t.getOriginalPrice());
+                        domain.setDistance(distanceMap.get(t.getStoreId()));
+                        return domain;
+                    }
+            ).collect(Collectors.toList());
 
-        List<FoodDomain> responseList = foodEntities.stream().map(t -> {
-                    FoodDomain domain = new FoodDomain();
-                    domain.setId(StringUtils.convertObjectToString(t.getId()));
-                    domain.setName(t.getName());
-                    domain.setFoodTypeId(StringUtils.convertObjectToString(t.getFoodTypeId()));
-                    domain.setStoreId(StringUtils.convertObjectToString(t.getStoreId()));
-                    domain.setStoreName(storeRepository.findById(t.getStoreId()).orElse(null).getName());
-                    domain.setSummaryRating(StringUtils.convertObjectToString(t.getSummaryRating()));
-                    domain.setAvatar(t.getAvatar());
-                    domain.setIsBestSeller(t.getIsBestSeller());
-                    domain.setTotalBuy(t.getTotalBuy());
-                    domain.setPrice(StringUtils.convertObjectToString(t.getPrice()));
-                    domain.setDiscountPercent(t.getDiscountPercent());
-                    domain.setOriginalPrice(t.getOriginalPrice());
-                    domain.setDistance(distanceMap.get(t.getStoreId()));
-                    return domain;
-                }
-        ).collect(Collectors.toList());
-        return responseList;
+        responseDataAPI.setData(responseList);
+        return responseDataAPI;
     }
 
     public FoodWithCommentDomain getFoodDetail(String food, String userApp) {
@@ -194,7 +198,7 @@ public class FoodServiceImpl {
                 commentDomain.setUserAvatar(userAppEntity.getAvatar());
                 String createDate = DateTimeUtils.convertDateToStringOrEmpty(ratingEntity.getCreatedDate(), DateTimeUtils.YYYYMMDDhhmm);
                 commentDomain.setCreatedDate(createDate);
-                List<RatingImageEntity> listImageRating = ratingImageRepository.findByRatingId(ratingEntity.getId());
+                List<RatingImageEntity> listImageRating = ratingImageRepository.findAllByRatingId(ratingEntity.getId());
                 if (CollectionUtils.isEmpty(listImageRating)){
                     commentDomain.setListImage(new ArrayList<>());
                 } else {
@@ -305,7 +309,7 @@ public class FoodServiceImpl {
                     storeDomain.setId(StringUtils.convertObjectToString(t.getId()));
                     storeDomain.setName(t.getName());
                     storeDomain.setAvatar(t.getAvatar());
-                    storeDomain.setAddress(t.getAddress());
+                    storeDomain.setAddress(t.getAddress().substring(0, t.getAddress().length() - 25));
                     storeDomain.setPhone(t.getPhone());
                     storeDomain.setSummaryRating(formatRatingUtils.formatRatingOneNumber(t.getSummaryRating()));
                     List<RatingEntity> listRatingIds = ratingRepository.getListRatingOfStore(t.getId());
@@ -314,7 +318,8 @@ public class FoodServiceImpl {
                     return storeDomain;
                 }).collect(Collectors.toList());
                 responseDataAPI.setData(listStoreResult);
-
+            } else {
+                responseDataAPI.setData(new ArrayList<>());
             }
         } else {
             Page<FoodEntity> listFood = foodRepository.findFoodBySearchValue(valueSearch, pageable);
@@ -338,6 +343,8 @@ public class FoodServiceImpl {
                     return domain;
                 }).collect(Collectors.toList());
                 responseDataAPI.setData(listFoodResult);
+            } else {
+                responseDataAPI.setData(new ArrayList<>());
             }
         }
         return responseDataAPI;
@@ -399,6 +406,12 @@ public class FoodServiceImpl {
                     , Error.PARAMETER_INVALID.getCode(), HttpStatus.BAD_REQUEST);
         }
 
+        FoodEntity foodEntity = foodRepository.findById(foodId).orElse(null);
+        if (foodEntity == null){
+            throw new CustomException("Món ăn không tồn tại"
+                    , "Món ăn không tồn tại", HttpStatus.BAD_REQUEST);
+        }
+
         RatingEntity ratingEntity = new RatingEntity();
         ratingEntity.setUserAppId(userAppId);
         ratingEntity.setFoodId(foodId);
@@ -438,6 +451,13 @@ public class FoodServiceImpl {
             ratingImageRepository.saveAll(listRatingImage);
         }
         success = "success";
+
+        List<RatingEntity> listRatingOfFood = ratingRepository.findAllByFoodId(foodId);
+        if (!CollectionUtils.isEmpty(listRatingOfFood)) {
+            Double totalRating = listRatingOfFood.stream().map(t -> t.getRating()).reduce(0l, (t1, t2) -> t1 + t2).doubleValue()/ listRatingOfFood.size();
+            foodEntity.setSummaryRating(Math.round(totalRating*1000.0)/1000.0);
+            foodRepository.save(foodEntity);
+        }
         return success;
     }
 
@@ -472,7 +492,14 @@ public class FoodServiceImpl {
                     listFoodStr.remove(0);
                     List<Long> listFoodId = listFoodStr.stream()
                             .map(t -> StringUtils.convertStringToLongOrNull(t))
-                            .filter(t -> foodRepository.findById(t).orElse(null) != null)
+                            .filter(t -> {
+                                FoodEntity foodEntity = foodRepository.findById(t).orElse(null);
+                                if (foodEntity == null || foodEntity.getFoodTypeId().equals(7l)){
+                                    return false;
+                                } else {
+                                    return true;
+                                }
+                            })
                             .collect(Collectors.toList());
                     List<Long> listRatingFoodOfUser = ratingRepository.findAllByUserAppId(userAppId) // list nay ko co lien quan toi food bi xoa
                             .stream().map(t -> t.getFoodId())
@@ -492,8 +519,11 @@ public class FoodServiceImpl {
                                     break;
                                 }
                                 if (!listWillShowFoodId.contains(foodId)){
-                                    listWillShowFoodId.add(foodId);
-                                    countListLength ++;
+                                    FoodEntity foodEntity = foodRepository.findById(foodId).orElse(null);
+                                    if (!foodEntity.getFoodTypeId().equals(7l)){
+                                        listWillShowFoodId.add(foodId);
+                                        countListLength ++;
+                                    }
                                 }
                             }
 
@@ -541,6 +571,7 @@ public class FoodServiceImpl {
                 return result;
             } else {// user ko co trong file
                 List<FoodEntity> listRecommendFood = foodRepository.findAll().stream()
+                        .filter(t -> !t.getFoodTypeId().equals(7l))
                         .sorted(Comparator.comparing(FoodEntity::getSummaryRating, Comparator.nullsLast(Comparator.reverseOrder())))
                         .limit(16)
                         .collect(Collectors.toList());

@@ -80,7 +80,7 @@ public class ItemBasedFilteringServiceImpl {
         return data;
     }
 
-//    @Scheduled(fixedRate = 172800000)
+    @Scheduled(fixedRate = 86500000)
 //    need
     public void setSummaryRating(){
         List<FoodEntity> listFood = foodRepository.findAll();
@@ -113,7 +113,7 @@ public class ItemBasedFilteringServiceImpl {
 
     }
 
-//    @Scheduled(fixedRate = 672800000)
+    @Scheduled(fixedRate = 86500000)
 //    need
     public void findInfoForAdminPage(){
         Long total = transactionRepository.findAll()

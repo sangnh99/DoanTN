@@ -186,4 +186,10 @@ public class AdminController {
         ResponseDataAPI responseDataAPI = userAppService.getShipperInfoAdmin(shipperId);
         return ResponseEntity.ok(ResponseDataAPI.builder().data(responseDataAPI.getData()).build());
     }
+
+    @PostMapping("/store/delete/{store_id}")
+    public ResponseEntity<ResponseDataAPI> deleteStoreAdmin(@PathVariable("store_id") String storeStr){
+        ResponseDataAPI responseDataAPI = storeService.deleteStoreAdmin(storeStr);
+        return ResponseEntity.ok(ResponseDataAPI.builder().data(responseDataAPI.getData()).totalRows(responseDataAPI.getTotalRows()).build());
+    }
 }

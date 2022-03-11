@@ -9,6 +9,7 @@ import com.example.demodatn.repository.FoodRepository;
 import com.example.demodatn.repository.UserAppRepository;
 import com.example.demodatn.service.FoodServiceImpl;
 //import io.swagger.annotations.ApiParam;
+import com.example.demodatn.service.ItemBasedFilteringServiceImpl;
 import com.example.demodatn.util.CalculateDistanceUtils;
 import com.example.demodatn.util.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +30,9 @@ public class FoodController {
 
     @Autowired
     private FoodRepository foodRepository;
+
+    @Autowired
+    private ItemBasedFilteringServiceImpl itemBasedFilteringService;
 
     @GetMapping("/{food_type}")
     public ResponseEntity<ResponseDataAPI> getFoodByFoodType(@PathVariable("food_type") String foodType,
@@ -54,7 +58,8 @@ public class FoodController {
         request.setColumnSort(columnSort);
         request.setTypeSort(typeSort);
         request.setValueSearch(searchValue);
-        return ResponseEntity.ok(ResponseDataAPI.builder().data(foodService.getListFoodByFoodType(userApp, foodType, request)).build());
+        ResponseDataAPI responseDataAPI = foodService.getListFoodByFoodType(userApp, foodType, request);
+        return ResponseEntity.ok(ResponseDataAPI.builder().data(responseDataAPI.getData()).totalRows(responseDataAPI.getTotalRows()).build());
     }
 
     @GetMapping("/{food_id}/detail")
@@ -116,6 +121,12 @@ public class FoodController {
     @GetMapping("/get-list-sale-food")
     public ResponseEntity<ResponseDataAPI> getListSaleFood(@RequestParam("user_app_id") String userApp){
         return ResponseEntity.ok(ResponseDataAPI.builder().data(foodService.geListSaleFood(userApp)).build());
+    }
+
+    @GetMapping("/update-recommend-file")
+    public ResponseEntity<ResponseDataAPI> updateRecommendFile(){
+        itemBasedFilteringService.buildDifferencesMatrixAndPredict();
+        return ResponseEntity.ok(ResponseDataAPI.builder().build());
     }
 
 }
