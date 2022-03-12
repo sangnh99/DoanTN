@@ -30,8 +30,8 @@ public interface UserAppRepository extends JpaRepository<UserAppEntity, Long> {
     @Query(value = "select u from UserAppEntity u where u.isDeleted <> 1 and u.isLocked <> 1")
     List<UserAppEntity> getListUserActive();
 
-    @Query(value = "select u from UserAppEntity  u where lower(u.username) like %?1% and u.id <> 18")
-    Page<UserAppEntity> getListUserBySearchValue(String valueSearch, Pageable pageable);
+    @Query(value = "select u from UserAppEntity u inner join UserRoleEntity ur on ur.userId = u.id inner join RoleEntity r on r.id = ur.roleId where lower(u.username) like %?1% and u.id <> 18 and r.code = ?2")
+    Page<UserAppEntity> getListUserBySearchValue(String valueSearch, String role, Pageable pageable);
 
     @Query(value = "select u from UserAppEntity u order by u.createdDate asc ")
     List<UserAppEntity> getListUserAppByCreateDate();

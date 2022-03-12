@@ -6,7 +6,8 @@ public enum FoodType {
     AN_VAT(3, "an vat"),
     DAC_SAN(4, "dac san"),
     HEALTHY(5, "healthy"),
-    DO_UONG(6, "do uong");
+    DO_UONG(6, "do uong"),
+    KHAC(7, "khac");
 
     private Integer number;
     private String name;

@@ -26,6 +26,7 @@ public class FoodWithCommentDomain {
     private Integer totalBuy;
     private Integer isBestSeller;
     private List<FoodDomain> listRecommendSameFood;
+    private Integer likeNumber;
 
     public String getFoodId() {
         return foodId;
@@ -177,5 +178,13 @@ public class FoodWithCommentDomain {
 
     public void setListRecommendSameFood(List<FoodDomain> listRecommendSameFood) {
         this.listRecommendSameFood = listRecommendSameFood;
+    }
+
+    public Integer getLikeNumber() {
+        return likeNumber;
+    }
+
+    public void setLikeNumber(Integer likeNumber) {
+        this.likeNumber = likeNumber;
     }
 }

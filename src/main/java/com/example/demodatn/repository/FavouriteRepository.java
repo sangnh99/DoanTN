@@ -17,4 +17,10 @@ public interface FavouriteRepository extends JpaRepository<FavouriteEntity, Long
     @Modifying
     @Query(value = "update FavouriteEntity set isDeleted = 1 where itemId = ?1 and type = 2")
     void deleteAllFavouriteByFoodId(Long foodId);
+
+    List<FavouriteEntity> findByItemIdAndType(Long itemId, Integer type);
+
+    @Modifying
+    @Query(value = "update FavouriteEntity set isDeleted = 1 where itemId = ?1 and type = 1")
+    void deleteAllFavouriteByStoreId(Long storeId);
 }

@@ -14,7 +14,7 @@ public interface TransactionItemRepository extends JpaRepository<TransactionItem
     List<TransactionItemEntity> findAllByTransactionId(Long transactionId);
     List<TransactionItemEntity> findAllByFoodId(Long foodId);
 
-//    @Modifying
-//    @Query(value = "update TransactionItemEntity set isDeleted = 1 where foodId = ?1")
-//    void deleteAllByFoodId(Long foodId);
+    @Modifying
+    @Query(value = "update TransactionItemEntity set isDeleted = 1 where foodId = ?1")
+    void deleteAllByFoodId(Long foodId);
 }

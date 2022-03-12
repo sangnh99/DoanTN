@@ -82,6 +82,8 @@ public class FavouriteServiceImpl {
                 result.setItemId(itemId);
                 result.setType(type);
                 favouriteRepository.save(result);
+                foodEntity.setLikeNumber(foodEntity.getLikeNumber() + 1);
+                foodRepository.save(foodEntity);
             }
         } else {
             throw new CustomException("Khong them vao ua thich duoc"

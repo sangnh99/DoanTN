@@ -1,9 +1,6 @@
 package com.example.demodatn.service;
 
-import com.example.demodatn.entity.DeliveryAddressEntity;
-import com.example.demodatn.entity.FoodEntity;
-import com.example.demodatn.entity.TransactionEntity;
-import com.example.demodatn.entity.TransactionItemEntity;
+import com.example.demodatn.entity.*;
 import com.example.demodatn.repository.*;
 import com.example.demodatn.util.CalculateDistanceUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,6 +66,24 @@ public class CronJobsServiceImpl {
 
 //    @Scheduled(fixedRate = 20000000)
 //    no need
+    public void setLikeNumber(){
+        List<FoodEntity> listFood = foodRepository.findAll();
+        List<FoodEntity> listSave = new ArrayList<>();
+        for (FoodEntity foodEntity : listFood){
+            List<FavouriteEntity> listFavourite = favouriteRepository.findByItemIdAndType(foodEntity.getId(), 2);
+
+            if (!CollectionUtils.isEmpty(listFavourite)){
+                foodEntity.setLikeNumber(listFavourite.size());
+            } else  {
+                foodEntity.setLikeNumber(0);
+            }
+            listSave.add(foodEntity);
+        }
+        foodRepository.saveAll(listSave);
+    }
+
+//    @Scheduled(fixedRate = 20000000)
+//    no need
     public void setDeliveryAddressForTransaction(){
         List<TransactionEntity> listTransaction = transactionRepository.findAll();
         List<TransactionEntity> listSave = new ArrayList<>();
@@ -105,7 +120,7 @@ public class CronJobsServiceImpl {
         transactionRepository.saveAll(listSave);
     }
 
-    @Scheduled(fixedRate = 276400000)
+    @Scheduled(fixedRate = 86500000)
 //    need
     public void findTopTenBestSeller(){
         List<FoodEntity> listFood = foodRepository.findAll();

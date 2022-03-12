@@ -80,7 +80,7 @@ public class ItemBasedFilteringServiceImpl {
         return data;
     }
 
-    @Scheduled(fixedRate = 172800000)
+    @Scheduled(fixedRate = 86500000)
 //    need
     public void setSummaryRating(){
         List<FoodEntity> listFood = foodRepository.findAll();
@@ -113,7 +113,7 @@ public class ItemBasedFilteringServiceImpl {
 
     }
 
-    @Scheduled(fixedRate = 672800000)
+    @Scheduled(fixedRate = 86500000)
 //    need
     public void findInfoForAdminPage(){
         Long total = transactionRepository.findAll()
@@ -146,7 +146,7 @@ public class ItemBasedFilteringServiceImpl {
         transactionRepository.saveAll(lisResult);
     }
 
-    @Scheduled(fixedRate = 372800000)
+//    @Scheduled(fixedRate = 372800000)
 //    need
     public void buildDifferencesMatrixAndPredict() {
         Map<Long, HashMap<Long, Double>> data = initializeData();
@@ -185,28 +185,35 @@ public class ItemBasedFilteringServiceImpl {
                 diff.get(j).put(i, oldValue / count);
             }
         }
+        //het buoc ni la im dc devij cho tung item
 
         //================================================================================
 
-        HashMap<Long, Double> uPred = new HashMap<Long, Double>();
-        HashMap<Long, Integer> uFreq = new HashMap<Long, Integer>();
-        for (Long j : diff.keySet()) {
-            uFreq.put(j, 0);
-            uPred.put(j, 0.0);
-        }
+//        HashMap<Long, Double> uPred = new HashMap<Long, Double>();//long : food, double : chenh lech
+//        HashMap<Long, Integer> uFreq = new HashMap<Long, Integer>();
+//        for (Long j : diff.keySet()) {
+//            uFreq.put(j, 0);
+//            uPred.put(j, 0.0);
+//        }
         for (Map.Entry<Long, HashMap<Long, Double>> e : data.entrySet()) {
-            for (Long j : e.getValue().keySet()) {
-                for (Long k : diff.keySet()) {
+            HashMap<Long, Double> uPred = new HashMap<Long, Double>();//long : food, double : chenh lech
+            HashMap<Long, Integer> uFreq = new HashMap<Long, Integer>();
+            for (Long j : diff.keySet()) {
+                uFreq.put(j, 0);
+                uPred.put(j, 0.0);
+            }
+            for (Long j : e.getValue().keySet()) {//tat cac cac food ma user da rating
+                for (Long k : diff.keySet()) {// tat ca cac food torng cua hang
                     try {
                         double predictedValue = diff.get(k).get(j).doubleValue() + e.getValue().get(j).doubleValue();
                         double finalValue = predictedValue * freq.get(k).get(j).intValue();
-                        uPred.put(k, uPred.get(k) + finalValue);
+                        uPred.put(k, uPred.get(k) + finalValue);// khi push cai moi vo thi cai cu bi mat
                         uFreq.put(k, uFreq.get(k) + freq.get(k).get(j).intValue());
                     } catch (NullPointerException e1) {
                     }
                 }
             }
-            HashMap<Long, Double> clean = new HashMap<Long, Double>();
+            HashMap<Long, Double> clean = new HashMap<Long, Double>();//long : food_id, double : diem cua user e voi food id
             for (Long j : uPred.keySet()) {
                 if (uFreq.get(j) > 0) {
                     clean.put(j, uPred.get(j).doubleValue() / uFreq.get(j).intValue());
