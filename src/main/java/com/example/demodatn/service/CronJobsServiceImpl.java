@@ -80,6 +80,16 @@ public class CronJobsServiceImpl {
             listSave.add(foodEntity);
         }
         foodRepository.saveAll(listSave);
+        System.out.println("da in xong");
+        System.out.println("da in xong");
+        System.out.println("da in xong");
+        System.out.println("da in xong");
+        System.out.println("da in xong");
+        System.out.println("da in xong");
+        System.out.println("da in xong");
+        System.out.println("da in xong");
+        System.out.println("da in xong");
+        System.out.println("da in xong");
     }
 
 //    @Scheduled(fixedRate = 20000000)

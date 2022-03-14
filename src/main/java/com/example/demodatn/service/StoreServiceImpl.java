@@ -308,6 +308,7 @@ public class StoreServiceImpl {
             Long price = priceDouble.longValue() * 1000;
 
             foodEntity.setPrice(price);
+            foodEntity.setLikeNumber(0);
             foodEntity.setAvatar(createNewFoodDomain.getAvatar());
             foodEntity.setStoreId(storeEntity.getId());
             foodEntity.setIsBestSeller(0);
@@ -519,6 +520,7 @@ public class StoreServiceImpl {
         Long price = priceDouble.longValue() * 1000;
 
         foodEntity.setPrice(price);
+        foodEntity.setLikeNumber(0);
         foodEntity.setAvatar(createNewFoodDomain.getAvatar());
         foodEntity.setStoreId(storeEntity.getId());
         foodEntity.setIsBestSeller(0);
