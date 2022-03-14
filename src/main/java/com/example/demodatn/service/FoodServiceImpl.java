@@ -309,7 +309,7 @@ public class FoodServiceImpl {
                     storeDomain.setId(StringUtils.convertObjectToString(t.getId()));
                     storeDomain.setName(t.getName());
                     storeDomain.setAvatar(t.getAvatar());
-                    storeDomain.setAddress(t.getAddress().substring(0, t.getAddress().length() - 25));
+                    storeDomain.setAddress(t.getAddress().substring(0, t.getAddress().length() - 26));
                     storeDomain.setPhone(t.getPhone());
                     storeDomain.setSummaryRating(formatRatingUtils.formatRatingOneNumber(t.getSummaryRating()));
                     List<RatingEntity> listRatingIds = ratingRepository.getListRatingOfStore(t.getId());
