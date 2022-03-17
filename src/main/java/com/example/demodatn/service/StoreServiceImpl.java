@@ -113,7 +113,7 @@ public class StoreServiceImpl {
                 CommentDomain commentDomain = new CommentDomain();
                 UserAppEntity userAppEntity = userAppRepository.getById(ratingEntity.getUserAppId());
                 FoodEntity foodEntity = foodRepository.findById(ratingEntity.getFoodId()).orElse(null);
-                        List<FoodEntity> listLikeFood = foodRepository.getListLikeFoodComment(userAppEntity.getId(), storeId);
+                        List<FoodEntity> listLikeFood = foodRepository.getListLikeFoodComment(userAppEntity.getId(), storeId, 2);
                         if (!CollectionUtils.isEmpty(listLikeFood)){
                             commentDomain.setListLikeFood(
                                     listLikeFood.stream().filter(ff -> !foodEntity.getId().equals(ff.getId()))

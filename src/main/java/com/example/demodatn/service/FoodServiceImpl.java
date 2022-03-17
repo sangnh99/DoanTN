@@ -191,7 +191,7 @@ public class FoodServiceImpl {
                     .map(ratingEntity -> {
                 CommentDomain commentDomain = new CommentDomain();
                 UserAppEntity userAppEntity = userAppRepository.getById(ratingEntity.getUserAppId());
-                List<FoodEntity> listLikeFood = foodRepository.getListLikeFoodComment(userAppEntity.getId(), storeEntity.getId());
+                List<FoodEntity> listLikeFood = foodRepository.getListLikeFoodComment(userAppEntity.getId(), storeEntity.getId(), 2);
                 if (!CollectionUtils.isEmpty(listLikeFood)){
                     commentDomain.setListLikeFood(
                             listLikeFood.stream().filter(ff -> !foodId.equals(ff.getId()))

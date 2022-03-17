@@ -29,6 +29,6 @@ public interface FoodRepository extends JpaRepository<FoodEntity, Long> {
     Page<FoodEntity> getAllFoodOfStoreAdmin(Long storeId, String searchValue, Pageable pageable);
 
 
-    @Query(value = "select f from FoodEntity f inner join FavouriteEntity fav on fav.itemId = f.id inner join UserAppEntity u on u.id = fav.userAppId where u.id = ?1 and f.storeId = ?2 and fav.type = 2")
-    List<FoodEntity> getListLikeFoodComment(Long userAppId, Long storeId);
+    @Query(value = "select f from FoodEntity f inner join FavouriteEntity fav on fav.itemId = f.id inner join UserAppEntity u on u.id = fav.userAppId where u.id = ?1 and f.storeId = ?2 and fav.type = ?3 and fav.isDeleted = 0")
+    List<FoodEntity> getListLikeFoodComment(Long userAppId, Long storeId, Integer type);
 }
