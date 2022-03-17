@@ -133,7 +133,7 @@ public class FavouriteServiceImpl {
                     storeDomain.setName(storeEntity.getName());
                     storeDomain.setId(StringUtils.convertObjectToString(storeEntity.getId()));
                     storeDomain.setPhone(storeEntity.getPhone());
-                    storeDomain.setAddress(storeEntity.getAddress().substring(0, storeEntity.getAddress().length() - 16));
+                    storeDomain.setAddress(storeEntity.getAddress().substring(0, storeEntity.getAddress().length() - 17));
                     storeDomain.setAvatar(storeEntity.getAvatar());
                     storeDomain.setDistance(distanceMap.get(storeEntity.getId()));
                     listStores.add(storeDomain);
