@@ -191,6 +191,21 @@ public class FoodServiceImpl {
                     .map(ratingEntity -> {
                 CommentDomain commentDomain = new CommentDomain();
                 UserAppEntity userAppEntity = userAppRepository.getById(ratingEntity.getUserAppId());
+                List<FoodEntity> listLikeFood = foodRepository.getListLikeFoodComment(userAppEntity.getId(), storeEntity.getId());
+                if (!CollectionUtils.isEmpty(listLikeFood)){
+                    commentDomain.setListLikeFood(
+                            listLikeFood.stream().filter(ff -> !foodId.equals(ff.getId()))
+                            .limit(3)
+                            .map(aa -> {
+                                FoodCommentLikeDomain likeDomain = new FoodCommentLikeDomain();
+                                likeDomain.setFoodId(aa.getId());
+                                likeDomain.setFoodName(aa.getName());
+                                return likeDomain;
+                            }).collect(Collectors.toList())
+                    );
+                } else {
+                    commentDomain.setListLikeFood(new ArrayList<>());
+                }
                 commentDomain.setId(StringUtils.convertObjectToString(ratingEntity.getId()));
                 commentDomain.setUserAppName(userAppEntity.getUsername());
                 commentDomain.setRating(StringUtils.convertObjectToString(ratingEntity.getRating()));

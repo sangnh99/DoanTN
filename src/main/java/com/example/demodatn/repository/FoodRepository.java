@@ -27,4 +27,8 @@ public interface FoodRepository extends JpaRepository<FoodEntity, Long> {
 
     @Query(value = "select f from FoodEntity f where f.storeId = ?1 and lower(f.name) like %?2%")
     Page<FoodEntity> getAllFoodOfStoreAdmin(Long storeId, String searchValue, Pageable pageable);
+
+
+    @Query(value = "select f from FoodEntity f inner join FavouriteEntity fav on fav.itemId = f.id inner join UserAppEntity u on u.id = fav.userAppId where u.id = ?1 and f.storeId = ?2 and fav.type = 2")
+    List<FoodEntity> getListLikeFoodComment(Long userAppId, Long storeId);
 }

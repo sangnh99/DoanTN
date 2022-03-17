@@ -1,5 +1,6 @@
 package com.example.demodatn.domain;
 
+import com.example.demodatn.constant.FoodCommentLikeDomain;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 
@@ -18,6 +19,7 @@ public class CommentDomain {
     private List<String> listImage;
     private String createdDate;
     private String userAvatar;
+    private List<FoodCommentLikeDomain> listLikeFood;
 
     public String getId() {
         return id;
@@ -105,5 +107,13 @@ public class CommentDomain {
 
     public void setUserAvatar(String userAvatar) {
         this.userAvatar = userAvatar;
+    }
+
+    public List<FoodCommentLikeDomain> getListLikeFood() {
+        return listLikeFood;
+    }
+
+    public void setListLikeFood(List<FoodCommentLikeDomain> listLikeFood) {
+        this.listLikeFood = listLikeFood;
     }
 }

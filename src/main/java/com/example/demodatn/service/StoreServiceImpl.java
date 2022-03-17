@@ -2,6 +2,7 @@ package com.example.demodatn.service;
 
 import com.example.demodatn.constant.Error;
 import com.example.demodatn.constant.FavouriteType;
+import com.example.demodatn.constant.FoodCommentLikeDomain;
 import com.example.demodatn.domain.*;
 import com.example.demodatn.entity.*;
 import com.example.demodatn.exception.CustomException;
@@ -112,6 +113,21 @@ public class StoreServiceImpl {
                 CommentDomain commentDomain = new CommentDomain();
                 UserAppEntity userAppEntity = userAppRepository.getById(ratingEntity.getUserAppId());
                 FoodEntity foodEntity = foodRepository.findById(ratingEntity.getFoodId()).orElse(null);
+                        List<FoodEntity> listLikeFood = foodRepository.getListLikeFoodComment(userAppEntity.getId(), storeId);
+                        if (!CollectionUtils.isEmpty(listLikeFood)){
+                            commentDomain.setListLikeFood(
+                                    listLikeFood.stream().filter(ff -> !foodEntity.getId().equals(ff.getId()))
+                                            .limit(3)
+                                            .map(aa -> {
+                                                FoodCommentLikeDomain likeDomain = new FoodCommentLikeDomain();
+                                                likeDomain.setFoodId(aa.getId());
+                                                likeDomain.setFoodName(aa.getName());
+                                                return likeDomain;
+                                            }).collect(Collectors.toList())
+                            );
+                        } else {
+                            commentDomain.setListLikeFood(new ArrayList<>());
+                        }
                 commentDomain.setId(StringUtils.convertObjectToString(ratingEntity.getId()));
                 commentDomain.setFoodId(StringUtils.convertObjectToString(foodEntity.getId()));
                 commentDomain.setFoodName(foodEntity.getName());
