@@ -195,7 +195,10 @@ public class StoreServiceImpl {
         for (FoodEntity foodEntity : listFood){
             List<TransactionItemEntity> listItem = transactionItemRepository.findAllByFoodId(foodEntity.getId());
             if (!CollectionUtils.isEmpty(listItem)){
-                recommendFoodMap.put(foodEntity, listItem.size());
+                Integer foodAmount = listItem.stream()
+                        .map(t -> t.getAmount())
+                        .reduce(0, (t1, t2) -> t1 + t2);
+                recommendFoodMap.put(foodEntity, foodAmount);
             }
         }
         if (CollectionUtils.isEmpty(recommendFoodMap)){
